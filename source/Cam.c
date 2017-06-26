@@ -6,10 +6,6 @@ License : MIT
 
 #include "includes.h"
 
-//gittest
-//yyyyyy
-//yyyyksdhfkshdkfhkjsdfhk
-
 // ====== Variables ======
 // ---- Global ----
 u8 cam_buffer_safe[BLACK_WIDTH*2];
@@ -523,6 +519,21 @@ void PORTC_IRQHandler(){
     PORTC->ISFR |= PORT_ISFR_ISF(1 << 9);
     cam_row = img_row = 0;
   }
+  else if((PORTC->ISFR)&PORT_ISFR_ISF(1 << 0)){  //超声波接收中断
+    PORTC->ISFR |= PORT_ISFR_ISF(1 << 0);
+    if((PTC->PDIR>>0)&1)  
+    {
+      wavetimef=PIT2_VAL();
+    }
+    else 
+    {
+        wavetime=wavetimef-PIT2_VAL();
+        wavetimeus = wavetime / (g_bus_clock/1000000); //1us
+        distance_tmp=wavetimeus*34/200;    //距离单位毫米
+        if(distance_tmp>4000||distance_tmp<30)  distance=4000;
+        else distance=distance_tmp;
+    }
+  }  
 }
 
 void DMA0_IRQHandler(){
