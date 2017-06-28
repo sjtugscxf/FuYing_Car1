@@ -30,10 +30,8 @@ u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍
                   //2 状态下减速
 //环岛处理========================================
 //以下出岛时需要全部置零
-int roundabout_flag=0;//0-未判断 1-已判断
+bool roundabout_flag=0;//0-未判断 1-已判断
 int roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可
-int cnt_miss=0; //累计未判断成环岛的次数
-bool former_choose_left=0,former_choose_right=0;//0=choose 1=not choose
 //========================================================
 float motor_L=MIN_SPEED;
 float motor_R=MIN_SPEED;
@@ -356,25 +354,9 @@ void Cam_B(){
       }
       else valid_row=ROAD_SIZE-3;
     }
-    if(valid_row<valid_row_thr){
+    if(valid_row<valid_row_thr)
       road_state=2;//弯道
-      cnt_miss++;
-    }
-    else{
-      road_state=1;//直道
-      cnt_miss++;
-    }
-    
-    // 累积miss过多时清空roundabout_flag
-    /*
-    if (cnt_miss>100){
-      roundabout_flag=0;
-      former_choose_left=0;
-      former_choose_right=0;
-      cnt_miss=0;
-    }
-    */
-    
+    else road_state=1;//直道
     //detect the black hole————————————————————
    /* int left=0,right=0;
     if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
@@ -406,7 +388,7 @@ void Cam_B(){
     if(left>=1 && right>=1)
       hole=1;//前方有类似黑洞出没*/
     
-    //区分环岛与十字的延长算法如下：
+    //区分环岛与十字的延长线法如下：
     if(roundabout_flag==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
       int cnt=0,tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
       double suml=0,sumr=0;
@@ -450,10 +432,10 @@ void Cam_B(){
           for (int i = left_now; i < right_now; i++){
             if (cam_buffer[60-CAM_STEP*j][i] < thr)
               cnt_black++;
- //           if(cnt_black>(right-left)*0.8) cnt_black_row++;
+            if(cnt_black>(right-left)*0.8) cnt_black_row++;
           }
           if(cnt_black_row>=3){
-            road_state=3;     //完成环岛判断
+            road_state=3;                       //完成环岛判断
             roundabout_flag=1;
             break;
           }
@@ -518,17 +500,14 @@ void Cam_B(){
         //float  weight3[10] = {1.118, 1.454, 2.296, 3.744, 5.304, 6.000, 5.304, 3.744, 2.296, 1.454};//未确定
         //for(int i=0;i<10;i++) weight[i] = weight2[i];
         
-        if (roundabout_flag==1){
         int left1=road_B[0].left,left2;
         int right1=road_B[0].right,right2;
         int mid1[ROAD_SIZE],mid2[ROAD_SIZE];
         mid1[0]=mid2[0]=road_B[0].mid;
         int mid_branch=CAM_WID/2;
-        
         //检测左右拐点谁先出现
-        if (former_choose_left==0 && former_choose_right==0){
         int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
-        bool flag_branch_choose_left=0,flag_branch_choose_right=0;
+        bool flag_branch_choose_left=0,flag_branch_choose_right=0;//0=choose 1=not choose
         
         bool flag_branch=0;
         for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描，重新扫描。如果为提高效率，可以考虑与前一个合并？？
@@ -598,20 +577,17 @@ void Cam_B(){
               if(tmpl2>0&&tmpl1<=0)
                 if((tmpl2-tmpl1)>5){
                   flag_branch_choose_left=1;//choose the left road
-                  former_choose_left=1;
                   roundabout_choice=1;
                   
                 }
               if(tmpr2<0&&tmpr1>=0)
                 if((tmpr1-tmpr2)>5){
                   flag_branch_choose_right=1;//choose the right road
-                  former_choose_right=1;
                   roundabout_choice=2;
                 }
-              if(flag_branch_choose_left==1&&flag_branch_choose_right==1){
-                former_choose_left=1;
+              if(flag_branch_choose_left==1&&flag_branch_choose_right==1)
                 roundabout_choice=3;
-              }
+              
             }
           }
           //此处判断flag_branch变化的次数，0-1-0-1-0，然后就可以设为出环岛，从而把roundabout相关量置零
@@ -622,128 +598,6 @@ void Cam_B(){
           for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid1[i];
         else if(flag_branch_choose_right==1)
           for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid2[i];
-        }
-        
-        // 出环岛时向左转
-        else if (former_choose_left==1){
-        int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
-        
-        bool flag_branch=0;
-        for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描，重新扫描。如果为提高效率，可以考虑与前一个合并？？
-        {
-          if(flag_branch==0){
-            int i;
-            //left
-            for (i = mid1[j]; i > 0; i--){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            left1 = i;
-            
-            //right
-            for (i = mid1[j]; i < CAM_WID; i++){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            right1 = i;
-            
-            //mid
-            mid1[j] = (left1 + right1)/2;//分别计算并存储每行的mid
-            //next mid
-            if(j<(ROAD_SIZE-1))
-              mid1[j+1]=mid1[j];//后一行从前一行中点开始扫描
-            
-            mid2[j]=mid1[j];//copy to mid2
-            
-            //分道判断
-            if(cam_buffer[60-CAM_STEP*j][mid1[j]]<thr){
-              flag_branch=1;
-              mid_branch=mid1[j];
-            }
-          }
-          else{//开始分道
-            
-            mid1[j]=(mid_branch+left1)/2;
-            mid2[j]=(mid_branch+right1)/2;
-            
-            int i;
-           //left
-            for (i = mid1[j]; i > 0; i--){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            left2=left1;
-            left1 = i;
-            mid1[j]=(mid_branch+left1)/2;          
-         
-          }
-          //此处判断flag_branch变化的次数，0-1-0-1-0，然后就可以设为出环岛，从而把roundabout相关量置零
-          
-        }
-        //根据最短路径更新路径中点
-        for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid1[i];
-        }
-        
-        // 出环岛时向右转
-        else if (former_choose_right==1){
-        int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
-        
-        bool flag_branch=0;
-        for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描，重新扫描。如果为提高效率，可以考虑与前一个合并？？
-        {
-          if(flag_branch==0){
-            int i;
-            //left
-            for (i = mid1[j]; i > 0; i--){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            left1 = i;
-            
-            //right
-            for (i = mid1[j]; i < CAM_WID; i++){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            right1 = i;
-            
-            //mid
-            mid1[j] = (left1 + right1)/2;//分别计算并存储每行的mid
-            //next mid
-            if(j<(ROAD_SIZE-1))
-              mid1[j+1]=mid1[j];//后一行从前一行中点开始扫描
-            
-            mid2[j]=mid1[j];//copy to mid2
-            
-            //分道判断
-            if(cam_buffer[60-CAM_STEP*j][mid1[j]]<thr){
-              flag_branch=1;
-              mid_branch=mid1[j];
-            }
-          }
-          else{//开始分道
-            
-            mid1[j]=(mid_branch+left1)/2;
-            mid2[j]=(mid_branch+right1)/2;
-            
-            int i;
-            
-            //right
-            for (i = mid2[j]; i < CAM_WID; i++){
-              if (cam_buffer[60-CAM_STEP*j][i] < thr)
-                break;
-              }
-            right2=right1;
-            right1 = i;
-            mid2[j]=(mid_branch+right1)/2;
-           
-          }
-          //此处判断flag_branch变化的次数，0-1-0-1-0，然后就可以设为出环岛，从而把roundabout相关量置零
-          
-        }
-        //根据最短路径更新路径中点
-        for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid2[i];
-        }
         
         break;
       case 4:
@@ -816,7 +670,7 @@ void Cam_B(){
     //C=getR(road_B[c1].mid,20-c1,road_B[c2].mid,20-c2,road_B[c3].mid,20-c3);
     
 }
-}
+
 
 
 
