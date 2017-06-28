@@ -26,12 +26,15 @@ int valid_row=0;//与有效行相关，未有效识别
 int valid_row_thr=10;//有效行阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
-u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍
+u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
                   //2 状态下减速
 //环岛处理========================================
 //以下出岛时需要全部置零
 bool roundabout_flag=0;//0-未判断 1-已判断
 int roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可
+int cnt_miss=0; //累计未判断成环岛的次数
+bool former_choose_left=0,former_choose_right=0;//0=choose 1=not choose
+bool is_cross=0; //判断是否是十字
 //========================================================
 float motor_L=MIN_SPEED;
 float motor_R=MIN_SPEED;
@@ -355,8 +358,19 @@ void Cam_B(){
       else valid_row=ROAD_SIZE-3;
     }
     if(valid_row<valid_row_thr)
-      road_state=2;//弯道
-    else road_state=1;//直道
+      {road_state=2;//弯道
+      cnt_miss++;}
+    else {road_state=1;cnt_miss++;}//直道
+    
+    //累积miss数量清零
+     if (cnt_miss>100){
+      roundabout_flag=0;
+      former_choose_left=0;
+      former_choose_right=0;
+      cnt_miss=0;
+      is_cross=0;
+    }
+    
     //detect the black hole————————————————————
    /* int left=0,right=0;
     if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
@@ -432,7 +446,7 @@ void Cam_B(){
           for (int i = left_now; i < right_now; i++){
             if (cam_buffer[60-CAM_STEP*j][i] < thr)
               cnt_black++;
-            if(cnt_black>(right-left)*0.8) cnt_black_row++;
+            if(cnt_black>(right_now-left_now)*0.8) cnt_black_row++;
           }
           if(cnt_black_row>=3){
             road_state=3;                       //完成环岛判断
@@ -440,7 +454,15 @@ void Cam_B(){
             break;
           }
         }
+        is_cross=1;
       }
+      if (flag_left_jump==1 && is_cross==0){
+        former_choose_left==1;
+      }
+      if (flag_right_jump==1 && is_cross==0){
+        former_choose_right=1;
+      }
+      
     }
     //
     
@@ -549,6 +571,7 @@ void Cam_B(){
             
             int i;
            //left
+            if (former_choose_right==0){
             for (i = mid1[j]; i > 0; i--){
               if (cam_buffer[60-CAM_STEP*j][i] < thr)
                 break;
@@ -556,8 +579,10 @@ void Cam_B(){
             left2=left1;
             left1 = i;
             mid1[j]=(mid_branch+left1)/2;
+            }
             
             //right
+            if (former_choose_left==0){
             for (i = mid2[j]; i < CAM_WID; i++){
               if (cam_buffer[60-CAM_STEP*j][i] < thr)
                 break;
@@ -565,7 +590,9 @@ void Cam_B(){
             right2=right1;
             right1 = i;
             mid2[j]=(mid_branch+right1)/2;
+            }
             
+            if (former_choose_left==0 && former_choose_right==0){
             //计算
             tmpl2=tmpl1;
             tmpl1=left1-left2;
@@ -583,20 +610,22 @@ void Cam_B(){
               if(tmpr2<0&&tmpr1>=0)
                 if((tmpr1-tmpr2)>5){
                   flag_branch_choose_right=1;//choose the right road
+                  former_choose_right==1;
                   roundabout_choice=2;
                 }
               if(flag_branch_choose_left==1&&flag_branch_choose_right==1)
                 roundabout_choice=3;
               
             }
+            }
           }
           //此处判断flag_branch变化的次数，0-1-0-1-0，然后就可以设为出环岛，从而把roundabout相关量置零
           
         }
         //根据最短路径更新路径中点
-        if(flag_branch_choose_left==1)
+        if(flag_branch_choose_left==1 || former_choose_left==1)
           for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid1[i];
-        else if(flag_branch_choose_right==1)
+        else if(flag_branch_choose_right==1 || former_choose_right==1)
           for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid2[i];
         
         break;
