@@ -37,7 +37,7 @@ void Cam_Init();
 #define CAM_WID 132//摄像头有效宽度//与摄像头安放位置有关//120//132
 #define thr 70//黑白阈值，目前无需调
 #define ROAD_WID 30//道路宽度，未知，需要在透视变换后使用、、、、、、、、、、
-#define Dir_Kp 4    //舵机比例控制参数
+#define Dir_Kp 3.75    //舵机比例控制参数
 #define Dir_Kd 3  //舵机微分控制参数
 #define MAX_SPEED 20 //直道最大速度/////////////////////////26为现在的极限
 #define MIN_SPEED 12 //弯道最大速度////////////////////////不确定
@@ -94,7 +94,10 @@ void multiply(int k);
 void matrixMultiply();
 void getNewBuffer();*/
 //——————
-
+//环岛相关=========
+extern int roundabout_flag;//0-不在环岛状态 1-在环岛状态，未出岛
+extern int roundabout_choice;//0-未选择 1-左 2-右 3-左右皆可
+//==============
 //test
 extern double theta;
 extern double x,y;
