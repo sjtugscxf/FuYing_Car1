@@ -170,8 +170,8 @@ void PIT0_IRQHandler(){
   
 #elif (CAR_TYPE==1)     // CCD
   
-  CCD1_GetLine(ccd1_line);
-  CCD2_GetLine(ccd2_line);
+  //CCD1_GetLine(ccd1_line);
+  //CCD2_GetLine(ccd2_line);
   
   
   

@@ -523,6 +523,21 @@ void PORTC_IRQHandler(){
     PORTC->ISFR |= PORT_ISFR_ISF(1 << 9);
     cam_row = img_row = 0;
   }
+  else if((PORTC->ISFR)&PORT_ISFR_ISF(1 << 17)){  //超声波接收中断
+    PORTC->ISFR |= PORT_ISFR_ISF(1 << 17);
+    if((PTC->PDIR>>17)&1)  
+    {
+      wavetimef=PIT2_VAL();
+    }
+    else 
+    {
+        wavetime=wavetimef-PIT2_VAL();
+        wavetimeus = wavetime / (g_bus_clock/1000000); //1us
+        distance_tmp=wavetimeus*34/200;    //距离单位毫米
+        if(distance_tmp>500) distance=distance_tmp;
+        else distance=distance_tmp;
+    }
+  }
 }
 
 void DMA0_IRQHandler(){
