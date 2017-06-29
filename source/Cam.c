@@ -456,10 +456,11 @@ void Cam_B(){
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
     if(dir>0)
-      dir*=1.2;//修正舵机左右不对称的问题//不可删
+      dir*=1.3;//修正舵机左右不对称的问题//不可删
+    else dir*=1.2;
     last_err = err;
     
-    dir=constrainInt(-230,230,dir);
+    dir=constrainInt(-220,220,dir);
     if(car_state!=0)
       Servo_Output(dir);
     else   
@@ -496,7 +497,10 @@ void Cam_B(){
       PWM(motor_L, motor_R, &L, &R);               //后轮速度
     }
    else
-     PWM(0, 0, &L, &R);
+   {
+     MotorL_Output(0); 
+     MotorR_Output(0);
+   }
     
     //方案二//暂时放弃
     //C=getR(road_B[c1].mid,20-c1,road_B[c2].mid,20-c2,road_B[c3].mid,20-c3);
