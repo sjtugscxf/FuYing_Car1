@@ -454,7 +454,9 @@ void Cam_B(){
             break;
           }
         }
-        is_cross=1;
+        if (roundabout_flag==0){
+          is_cross=1;
+        }
       }
       if (flag_left_jump==1 && is_cross==0){
         former_choose_left==1;
@@ -571,7 +573,7 @@ void Cam_B(){
             
             int i;
            //left
-            if (former_choose_right==0){
+            if (former_choose_left==1){
             for (i = mid1[j]; i > 0; i--){
               if (cam_buffer[60-CAM_STEP*j][i] < thr)
                 break;
@@ -582,7 +584,7 @@ void Cam_B(){
             }
             
             //right
-            if (former_choose_left==0){
+            if (former_choose_right==1){
             for (i = mid2[j]; i < CAM_WID; i++){
               if (cam_buffer[60-CAM_STEP*j][i] < thr)
                 break;
@@ -604,16 +606,18 @@ void Cam_B(){
               if(tmpl2>0&&tmpl1<=0)
                 if((tmpl2-tmpl1)>5){
                   flag_branch_choose_left=1;//choose the left road
+                  former_choose_left=1;
                   roundabout_choice=1;
                   
                 }
               if(tmpr2<0&&tmpr1>=0)
                 if((tmpr1-tmpr2)>5){
                   flag_branch_choose_right=1;//choose the right road
-                  former_choose_right==1;
+                  former_choose_right=1;
                   roundabout_choice=2;
                 }
               if(flag_branch_choose_left==1&&flag_branch_choose_right==1)
+                former_choose_left=1;
                 roundabout_choice=3;
               
             }
@@ -623,10 +627,10 @@ void Cam_B(){
           
         }
         //根据最短路径更新路径中点
-        if(flag_branch_choose_left==1 || former_choose_left==1)
-          for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid1[i];
-        else if(flag_branch_choose_right==1 || former_choose_right==1)
-          for(int i=0;i<ROAD_SIZE;i++)road_B[i].mid=mid2[i];
+        if(flag_branch_choose_left==1 || former_choose_left==1) {
+          for(int i=0;i<ROAD_SIZE;i++) road_B[i].mid=mid1[i];}
+        else if(flag_branch_choose_right==1 || former_choose_right==1) {
+          for(int i=0;i<ROAD_SIZE;i++) road_B[i].mid=mid2[i];}
         
         break;
       case 4:
