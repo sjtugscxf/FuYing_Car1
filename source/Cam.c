@@ -363,16 +363,18 @@ void Cam_B(){
     else {road_state=1;cnt_miss++;}//直道
     
     //累积miss数量清零
-     if (cnt_miss>100){
+    /*
+     if (cnt_miss>500){
       roundabout_flag=0;
       former_choose_left=0;
       former_choose_right=0;
       cnt_miss=0;
       is_cross=0;
-    }
+    }*/
     
     //detect the black hole————————————————————
-   /* int left=0,right=0;
+    /*
+   int left=0,right=0;
     if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
     {
       //left
@@ -400,7 +402,7 @@ void Cam_B(){
     }
     bool static hole=0;
     if(left>=1 && right>=1)
-      hole=1;//前方有类似黑洞出没*/
+      hole=1;*/ //前方有类似黑洞出没
     
     //区分环岛与十字的延长线法如下：
     if(roundabout_flag==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
