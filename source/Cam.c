@@ -522,7 +522,7 @@ void PORTC_IRQHandler(){
   else if(PORTC->ISFR&PORT_ISFR_ISF(1 << 9)){   //VS
     PORTC->ISFR |= PORT_ISFR_ISF(1 << 9);
     cam_row = img_row = 0;
-  }
+  }/*
   else if((PORTC->ISFR)&PORT_ISFR_ISF(1 << 17)){  //³¬Éù²¨½ÓÊÕÖÐ¶Ï
     PORTC->ISFR |= PORT_ISFR_ISF(1 << 17);
     if((PTC->PDIR>>17)&1)  
@@ -537,7 +537,7 @@ void PORTC_IRQHandler(){
         if(distance_tmp>500) distance=distance_tmp;
         else distance=distance_tmp;
     }
-  }
+  }*/
 }
 
 void DMA0_IRQHandler(){
