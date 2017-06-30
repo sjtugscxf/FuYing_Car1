@@ -1,6 +1,8 @@
 #ifndef UART_H
 #define UART_H
 
+// ------ global ------
+extern u8 get_num;
 
 // ====== APIs ======
 

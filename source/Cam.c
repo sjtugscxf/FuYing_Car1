@@ -494,6 +494,16 @@ void Cam_B(){
       else{
         motor_L=motor_R=MIN_SPEED;
       }
+      /*if(distance <= 250)
+      {
+        motor_L *= 0.8;
+        motor_R *= 0.8;
+      }
+      if(distance >= 500)
+      {
+        motor_L *= 1.1;
+        motor_R *= 1.1;
+      }*/
       PWM(motor_L, motor_R, &L, &R);               //∫Û¬÷ÀŸ∂»
     }
    else

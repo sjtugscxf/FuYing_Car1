@@ -18,6 +18,8 @@ U32 pit1_time;
  
 //--- local ---
 U32 pit1_time_tmp;
+U8 uart_count1 = 0;//数到25发一个字符
+U8 uart_count2 = 0;
 
 // =========== PID CONTROL =========== 
 PIDInfo L, R;  //两个结构体指针，存与电机pid控制有关的量， 包括pid三个参数，lastErr
@@ -116,6 +118,19 @@ void PIT1_IRQHandler(){
   Bell_Service();
   
   UI_SystemInfo();
+  
+    
+  //------------- for uart test -------------
+  uart_count1++;
+  if(uart_count1 >= 25)
+  {
+    UART_SendChar('0'+ uart_count2);
+    uart_count2++;
+    if(uart_count2 >= 10)
+      uart_count2 = 0;
+    uart_count1 = 0;
+  }
+  
   
   
   //------------ Other -------------

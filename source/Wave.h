@@ -2,12 +2,12 @@
 #define WAVE_H
 
 // ===== Global Variables =====
-extern U32 distance;   //  mm
+extern int distance;   //  mm
 extern U32 wavetimef;
 extern U32 wavetime;
 extern U32 wavetimeus;
-extern U32 distance_tmp;
-extern U32 distance_last;
+extern int distance_tmp;
+extern int distance_last;
 
 // ======= APIs =======
 void StartUltrasound(u8 x);  //1¿ªÆô£¬0¹Ø±Õ
