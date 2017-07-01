@@ -213,9 +213,9 @@ void displayDebug()//menu==3
     if(!Key3() && flag_down==0 && MAX_SPEED+debug_speed>MIN_SPEED+2) {debug_speed-=1;flag_down=1;}
     break;
   case 3:
-    Oled_Putstr(6,0,"Debugging Margin"); Oled_Putnum(7,11,margin);
-    if(!Key2() && flag_down==0) {margin+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && margin>0) {margin-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging jump_thr"); Oled_Putnum(7,11,jump_thr);
+    if(!Key2() && flag_down==0) {jump_thr+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && margin>0) {jump_thr-=1;flag_down=1;}
     break;
 /*  case 4:
     Oled_Putstr(6,0,"Debugging c1"); Oled_Putnum(7,11,c1);

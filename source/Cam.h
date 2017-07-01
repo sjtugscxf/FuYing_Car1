@@ -97,6 +97,7 @@ void getNewBuffer();*/
 //环岛相关=========
 extern bool roundabout_flag;//0-不在环岛状态 1-在环岛状态，未出岛
 extern int roundabout_choice;//0-未选择 1-左 2-右 3-左右皆可
+extern int jump_thr;
 //==============
 //test
 extern double theta;

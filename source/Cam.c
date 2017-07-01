@@ -35,6 +35,9 @@ int roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可
 int cnt_miss=0; //累计未判断成环岛的次数
 bool former_choose_left=0,former_choose_right=0;//0=choose 1=not choose
 bool is_cross=0; //判断是否是十字
+bool miss_jump=0; // 记录连续未检测到拐点的次数
+int forced_turn=0;
+int jump_thr=5;
 //========================================================
 float motor_L=MIN_SPEED;
 float motor_R=MIN_SPEED;
@@ -359,18 +362,19 @@ void Cam_B(){
     }
     if(valid_row<valid_row_thr)
       {road_state=2;//弯道
-      cnt_miss++;}
-    else {road_state=1;cnt_miss++;}//直道
+       cnt_miss++;}
+    else {road_state=1;
+           cnt_miss++;}//直道
     
     //累积miss数量清零
-    /*
-     if (cnt_miss>500){
+    
+    if (cnt_miss>1000){
       roundabout_flag=0;
       former_choose_left=0;
       former_choose_right=0;
       cnt_miss=0;
       is_cross=0;
-    }*/
+    }
     
     //detect the black hole————————————————————
     /*
@@ -405,7 +409,7 @@ void Cam_B(){
       hole=1;*/ //前方有类似黑洞出没
     
     //区分环岛与十字的延长线法如下：
-    if(roundabout_flag==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
+    if(1){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
       int cnt=0,tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
       double suml=0,sumr=0;
       //int thr_tmp=0;//未用
@@ -416,7 +420,8 @@ void Cam_B(){
           tmpl2=tmpl1;
           tmpl1=road_B[cnt+1].left-road_B[cnt].left;
           suml+=tmpl1;
-          if(tmpl1<0&&tmpl2>0) {
+          if((tmpl2-tmpl1)>jump_thr){
+//          if(tmpl1<0&&tmpl2>0) {
             flag_left_jump=1;
             jump[0][0]=road_B[cnt].left;
             jump[0][1]=60-CAM_STEP*cnt;
@@ -427,7 +432,8 @@ void Cam_B(){
           tmpr2=tmpr1;
           tmpr1=road_B[cnt+1].right-road_B[cnt].right;
           sumr+=tmpr1;
-          if(tmpr1>0&&tmpr2<0) {
+          if((tmpr1-tmpr2)>jump_thr){
+//          if(tmpr1>0&&tmpr2<0) {
             flag_right_jump=1;
             jump[1][0]=road_B[cnt].right;
             jump[1][1]=60-CAM_STEP*cnt;
@@ -462,9 +468,14 @@ void Cam_B(){
       }
       if (flag_left_jump==1 && is_cross==0){
         former_choose_left==1;
+        jump_miss=0;
       }
       if (flag_right_jump==1 && is_cross==0){
         former_choose_right=1;
+        jump_miss=0;
+      }
+      if (flag_left_jump==0 && flag_right_jump==0){
+        jump_miss++;
       }
       
     }
@@ -609,6 +620,7 @@ void Cam_B(){
                 if((tmpl2-tmpl1)>5){
                   flag_branch_choose_left=1;//choose the left road
                   former_choose_left=1;
+                  jump_miss=0;
                   roundabout_choice=1;
                   
                 }
@@ -616,10 +628,12 @@ void Cam_B(){
                 if((tmpr1-tmpr2)>5){
                   flag_branch_choose_right=1;//choose the right road
                   former_choose_right=1;
+                  jump_miss=0;
                   roundabout_choice=2;
                 }
               if(flag_branch_choose_left==1&&flag_branch_choose_right==1)
                 former_choose_left=1;
+                jump_miss=0;
                 roundabout_choice=3;
               
             }
@@ -629,10 +643,18 @@ void Cam_B(){
           
         }
         //根据最短路径更新路径中点
-        if(flag_branch_choose_left==1 || former_choose_left==1) {
-          for(int i=0;i<ROAD_SIZE;i++) road_B[i].mid=mid1[i];}
-        else if(flag_branch_choose_right==1 || former_choose_right==1) {
-          for(int i=0;i<ROAD_SIZE;i++) road_B[i].mid=mid2[i];}
+        if((flag_branch_choose_left==1 || former_choose_left==1) && jump_miss>400) {
+          forced_turn=1;
+        }
+          //jump_miss=0;}
+        else if(flag_branch_choose_right==1 || former_choose_right==1 && jump_miss>400) {
+          forced_turn=2;
+        }
+        if(jump_miss>600){
+          forced_turn=0;
+          jump_miss=0;
+        }
+          //jump_miss=0;}
         
         break;
       case 4:
@@ -661,7 +683,8 @@ void Cam_B(){
     
     dir=constrainInt(-230,230,dir);
     
-    
+    if(forced_turn==1) dir=-200;
+    else if(forced_turn==2) dir=200;
     
     if(car_state!=0)
       Servo_Output(dir);
