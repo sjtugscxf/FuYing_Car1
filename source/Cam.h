@@ -67,6 +67,7 @@ extern float mid_ave;//road中点加权后的值
 extern float weight[4][10];//road中点权值
 extern int valid_row;//有效行位置，大小为road_B[]下标
 extern int valid_row_thr;//有效行阈值
+extern int long_straight_thr;//长直道阈值
 extern u8 car_state;//智能车状态
 extern u8 remote_state;//远程控制
 extern u8 road_state;//前方道路状态
@@ -78,6 +79,7 @@ extern PIDInfo debug_dir;
 extern int margin;
 extern circle C;
 extern int c1, c2, c3;
+extern u8 long_straight;
 
 void Cam_B_Init();//初始化Cam_B
 float constrain(float lowerBoundary, float upperBoundary, float input);//控制上下限的函数

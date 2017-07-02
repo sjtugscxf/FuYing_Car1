@@ -23,12 +23,14 @@ float weight[4][10] ={ {0,0,0,0,0,0,0,0,0,0},
                         {1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29},
                         {1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}};
 int valid_row=0;//与有效行相关，未有效识别
-int valid_row_thr=10;//有效行阈值
+int valid_row_thr = 6;//有效行阈值
+int long_straight_thr = 18;//长直道阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
 u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍
                   //3 4 状态下权重拉近
                   //2 状态下减速
+u8 long_straight = 0;//0 long straight road not found, 1 found, ready for overtaking
 
 float motor_L=MIN_SPEED;
 float motor_R=MIN_SPEED;
@@ -36,7 +38,7 @@ float motor_R=MIN_SPEED;
 //OLED调参
 int debug_speed=0;
 PIDInfo debug_dir;
-int margin=30;
+int margin=45;//should be changed
 circle C;
 int c1=15, c2=10, c3=5;
 
@@ -351,9 +353,23 @@ void Cam_B(){
       }
       else valid_row=ROAD_SIZE-3;
     }
-    if(valid_row<valid_row_thr)
+    if(valid_row < valid_row_thr)
+    {
       road_state=2;//弯道
+      //long_straight = 0;
+    }
     else road_state=1;//直道
+    if(valid_row > long_straight_thr)
+    {
+      if(abs((road_B[valid_row - 2].mid - road_B[valid_row - 14].mid) - (road_B[valid_row - 8].mid - road_B[1].mid)) < 3)
+      {
+        long_straight = 1;
+        UART_SendChar('L');
+      }
+    }
+    else long_straight = 0;
+    
+    /*
     //detect the black hole————————————————————
     int left=0,right=0;
     if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
@@ -383,6 +399,7 @@ void Cam_B(){
     }
     if(left>=1 && right>=1)
       road_state=3;//前方环岛
+    */
     //detect the obstacle————————————————————
   /*  if((road_B[ROAD_OBST_ROW].right-road_B[ROAD_OBST_ROW].left)<OBSTACLE_THR)
     {
@@ -442,6 +459,13 @@ void Cam_B(){
     
     //================================对十行mid加权：
     float weight_sum=0;
+    /*if(long_straight == 1)
+    {
+      for(int j = 0; j < 25; j++)
+      {
+        road_B[j].mid = (road_B[j].right + road_B[j].mid) / 2;
+      }
+    }*/
     for(int j=0;j<10;j++)
     {
       mid_ave += road_B[j].mid * weight[road_state][j];
@@ -461,6 +485,8 @@ void Cam_B(){
     last_err = err;
     
     dir=constrainInt(-220,220,dir);
+    if(long_straight == 1)
+      dir = dir - 80;
     if(car_state!=0)
       Servo_Output(dir);
     else   
@@ -494,7 +520,9 @@ void Cam_B(){
       else{
         motor_L=motor_R=MIN_SPEED;
       }
-      PWM(motor_L, motor_R, &L, &R);               //后轮速度
+      if(long_straight == 0)
+        PWM(motor_L, motor_R, &L, &R);               //后轮速度
+      else PWM(motor_L/2, motor_R/2, &L, &R); 
     }
    else
    {
