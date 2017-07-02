@@ -80,6 +80,8 @@ extern int margin;
 extern circle C;
 extern int c1, c2, c3;
 extern u8 long_straight;
+extern u8 cross_found;
+extern int slope_diff;
 
 void Cam_B_Init();//初始化Cam_B
 float constrain(float lowerBoundary, float upperBoundary, float input);//控制上下限的函数
