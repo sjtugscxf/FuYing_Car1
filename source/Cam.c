@@ -20,7 +20,7 @@ float weight[4][10] ={ {0,0,0,0,0,0,0,0,0,0},
                         {1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}};
 int valid_row=0;//与有效行相关，未有效识别
 int valid_row_thr = 6;//有效行阈值
-int long_straight_thr = 20;//长直道阈值
+int long_straight_thr = 17;//长直道阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
 u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍
@@ -319,6 +319,7 @@ void Cam_B(){
     }
     */
     //横向扫描方案
+    slope_diff = 0;
     for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描
     {
       int i;
@@ -336,10 +337,10 @@ void Cam_B(){
       road_B[j].right = i;
       if(road_B[j].left == 0 && road_B[j].right == CAM_WID)
         cross_found = 1;
-      if(j > 2 && j < 20
+      /*if(j > 2 && j < 20
                && (road_B[j].left - 2 * road_B[j-1].left + road_B[j-2].left) < -5
                && (road_B[j].right - 2 * road_B[j-1].right + road_B[j-2].right) > 5)
-        cross_found = 1;
+        cross_found = 1;*/
       //mid
       road_B[j].mid = (road_B[j].left + road_B[j].right)/2;//分别计算并存储25行的mid
       //store
@@ -347,7 +348,7 @@ void Cam_B(){
         road_B[j+1].mid=road_B[j].mid;//后一行从前一行中点开始扫描
     }
     
-    for(int i = 0;i < 12; i++)
+    /*for(int i = 0;i < 12; i++)
     {
       slope[i] = road_B[i*2+2].mid - road_B[i*2].mid;
       slope_ave += slope[i];
@@ -355,8 +356,8 @@ void Cam_B(){
     slope_ave /= 12;
     for(int i = 0; i < 12; i++)
     {
-      slope_diff += abs(slope[i] - slope_ave);
-    }
+      slope_diff += (slope[i] - slope_ave)*(slope[i] - slope_ave);
+    }*/
       
     //===========================区分前方道路类型//需要设置一个优先级！！！
     static int mid_ave3;
@@ -377,12 +378,12 @@ void Cam_B(){
       //long_straight = 0;
     }
     else road_state=1;//直道
-    if(valid_row > long_straight_thr && cross_found == 0 && slope_diff < 12)//////////
+    if(valid_row > long_straight_thr && cross_found == 0 /*&& slope_diff < 35*/)
     {
       if(abs((road_B[valid_row - 2].mid - road_B[valid_row - 14].mid) - (road_B[valid_row - 8].mid - road_B[1].mid)) < 3)
       {//曲率突变也可以当成判据
         long_straight = 1;
-        //UART_SendChar('L');
+        UART_SendChar('L');
       }
     }
     else long_straight = 0;
