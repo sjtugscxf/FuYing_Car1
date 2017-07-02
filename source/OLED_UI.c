@@ -6,7 +6,8 @@
 u8 oled_menu=0;
 // ---- Local ----
 bool flag_down=0;
-
+#define ROW 0
+#define COL 0
 
 
   /*
@@ -97,8 +98,16 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
-  {"road_state",road_state},{"round_flag",roundabout_flag},{"round_choice",roundabout_choice},
-      //{"valid_row",valid_row}, 
+  {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
+  {"check near wid",road_B[check_near].right-road_B[check_near].left},
+  {"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
+  {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
+  {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
+  {"forced_turn",forced_turn},
+  {"jump_miss",jump_miss},
+  {"cnt_miss",cnt_miss},        {"f_ch_left",former_choose_left},{"f_ch_right",former_choose_right},
+  {"is_cross",is_cross},
+  //{"valid_row",valid_row}, 
       {"battery",battery},    
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
@@ -108,8 +117,8 @@ void displayParameters()//menu==1
       //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
-      {"mid_ave_x",mid_ave},
-      {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[1].mid},         {"mid[2]",road_B[2].mid}, 
+      {"mid_ave",mid_ave},
+   /* {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[1].mid},         {"mid[2]",road_B[2].mid}, 
       {"mid[3]",road_B[3].mid},     {"mid[4]",road_B[4].mid},         {"mid[5]",road_B[5].mid}, 
       {"mid[6]",road_B[6].mid},     {"mid[7]",road_B[7].mid},         {"mid[8]",road_B[8].mid},
       {"mid[9]",road_B[9].mid},     {"mid[10]",road_B[10].mid},       {"mid[11]",road_B[11].mid},
@@ -117,16 +126,19 @@ void displayParameters()//menu==1
       {"mid[15]",road_B[15].mid},   {"mid[16]",road_B[16].mid},       {"mid[17]",road_B[17].mid},
       {"mid[18]",road_B[18].mid},   {"mid[19]",road_B[19].mid},       {"mid[20]",road_B[20].mid},
       {"mid[21]",road_B[21].mid},   {"mid[22]",road_B[22].mid},       {"mid[23]",road_B[23].mid}, 
-      {"mid[24]",road_B[24].mid}
+      {"mid[24]",road_B[24].mid}*/
+      {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[5].mid},         {"mid[2]",road_B[10].mid},       {"mid[3]",road_B[15].mid},     {"mid[4]",road_B[20].mid},  
+      {"mid[5]",road_B[25].mid},       {"mid[6]",road_B[30].mid},     {"mid[7]",road_B[35].mid},         {"mid[8]",road_B[40].mid},     {"mid[9]",road_B[45].mid},  
     },
-    {
+   // {
           
-      {"weight[road_state][0]",weight[road_state][0]*10},      {"weight[road_state][1]",weight[road_state][1]*10},        {"weight[road_state][2]",weight[road_state][2]*10},
+    /*  {"weight[road_state][0]",weight[road_state][0]*10},      {"weight[road_state][1]",weight[road_state][1]*10},        {"weight[road_state][2]",weight[road_state][2]*10},
       {"weight[road_state][3]",weight[road_state][3]*10},      {"weight[road_state][4]",weight[road_state][4]*10},        {"weight[road_state][5]",weight[road_state][5]*10},
       {"weight[road_state][6]",weight[road_state][6]*10},      {"weight[road_state][7]",weight[road_state][6]*10},        {"weight[road_state][8]",weight[road_state][8]*10},
       {"weight[road_state][9]",weight[road_state][9]*10},          {"",0}
-    }
-   /* {
+    }*/
+    {
+      {"cam_buf[64]",cam_buffer[64][60]},
       {"cam_buf[60]",cam_buffer[60][60]},
       {"cam_buf[55]",cam_buffer[55][60]},
       {"cam_buf[50]",cam_buffer[50][60]},  
@@ -137,8 +149,10 @@ void displayParameters()//menu==1
       {"cam_buf[25]",cam_buffer[25][60]},
       {"cam_buf[20]",cam_buffer[20][60]},
       {"cam_buf[15]",cam_buffer[15][60]},
-      {"cam_buf[10]",cam_buffer[10][60]}
-    }*/
+      {"cam_buf[10]",cam_buffer[10][60]},
+      {"cam_buf[5]",cam_buffer[5][60]},
+      {"cam_buf[0]",cam_buffer[0][60]}
+    }
   };
   
   for (int i=1;i<=7;i++)                           
@@ -177,7 +191,7 @@ void displayDebug()//menu==3
   else if(!Key1() && flag_down==0)
   {
     para_state++;
-    para_state%=4;
+    para_state%=6;
     flag_down=1;
   }
   switch(para_state)
@@ -208,14 +222,24 @@ void displayDebug()//menu==3
     if(!Key3() && flag_down==0) {debug_dir.kd-=0.1;flag_down=1;}
     break;
   case 2:
-    Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,debug_speed);
-    if(!Key2() && flag_down==0) {debug_speed+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && MAX_SPEED+debug_speed>MIN_SPEED+2) {debug_speed-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,max_speed);
+    if(!Key2() && flag_down==0) {max_speed+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && max_speed>min_speed+1) {max_speed-=1;flag_down=1;}
     break;
   case 3:
+    Oled_Putstr(6,0,"Debugging MinSpeed"); Oled_Putnum(7,11,min_speed);
+    if(!Key2() && flag_down==0) {min_speed+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && min_speed>1) {min_speed-=1;flag_down=1;}
+    break;
+  case 4:
     Oled_Putstr(6,0,"Debugging jump_thr"); Oled_Putnum(7,11,jump_thr);
     if(!Key2() && flag_down==0) {jump_thr+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && margin>0) {jump_thr-=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {jump_thr-=1;flag_down=1;} 
+    break;
+  case 5:
+    Oled_Putstr(6,0,"Debugging check_far"); Oled_Putnum(7,11,check_farthest);
+    if(!Key2() && flag_down==0) {check_farthest+=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {check_farthest-=1;flag_down=1;} 
     break;
 /*  case 4:
     Oled_Putstr(6,0,"Debugging c1"); Oled_Putnum(7,11,c1);
@@ -237,8 +261,10 @@ void displayDebug()//menu==3
   
   Oled_Putstr(0,0,"dir.kp*10"); Oled_Putnum(0,11,(Dir_Kp+debug_dir.kp)*10);
   Oled_Putstr(1,0,"dir.kd*10"); Oled_Putnum(1,11,(Dir_Kd+debug_dir.kd)*10);
-  Oled_Putstr(2,0,"MaxSpeed"); Oled_Putnum(2,11,MAX_SPEED+debug_speed);
-    
+  Oled_Putstr(2,0,"MaxSpeed"); Oled_Putnum(2,11,max_speed);
+  Oled_Putstr(3,0,"MinSpeed"); Oled_Putnum(3,11,min_speed);
+  Oled_Putstr(4,0,"jump_thr"); Oled_Putnum(4,11,jump_thr);  
+  Oled_Putstr(5,0,"check_far"); Oled_Putnum(5,11,check_farthest); 
 }
 
 void drawCam(bool(*isTarget)(u8 x)) {
