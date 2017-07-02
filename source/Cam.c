@@ -7,7 +7,7 @@ u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
 //通用·赛道识别================================
 int MAX_SPEED=20;
-int MIN_SPEED=10;
+int MIN_SPEED=12;
 Road road_B[ROAD_SIZE];//由近及远存放
 float mid_ave;//road中点加权后的值
 float weight[4][10] ={ {0,0,0,0,0,0,0,0,0,0},
@@ -650,7 +650,7 @@ void Cam_B(){
                                         //另一办法是检测分道是否存在，猜想：通过观察较近处的路宽判断是否会有分道
                                         //（尝试如下，在road_B[check_near]处检测，若right-left大于road_width_max（可调参），则利用roundabout_choice将mid_ave左移或右移）
           //  }
-            for(int i=2;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量
+            for(int i=0;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
               if(roundabout_choice==1) road_B[i].mid *= 0.2;
               else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.75);
             }
@@ -665,7 +665,7 @@ void Cam_B(){
           
           //用来检测什么时候出现分叉
           time_cnt++;
-          if((road_B[ROAD_SIZE-check_near].right-road_B[ROAD_SIZE-check_near].left)>20 && time_cnt>=500){//如果路过于宽，认为出现分叉//该判断不对！！！！！！！！！！！！！！！！！！！！！！
+          if(isWider(check_near) && time_cnt>=500){//如果路过于宽，认为出现分叉//该判断不对！！！！！！！！！！！！！！！！！！！！！！
             roundabout_state=0;
             time_cnt=0;
           }
@@ -830,8 +830,8 @@ void Cam_B(){
     err = mid_ave  - CAM_WID / 2;
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
-   // if(dir>0)
-    //  dir*=1.2;//修正舵机左右不对称的问题//不可删
+    if(dir>0)
+      dir*=1.5;//修正舵机左右不对称的问题//不可删
     last_err = err;
     
     dir=constrainInt(-230,230,dir);
