@@ -106,7 +106,10 @@ void displayParameters()//menu==1
       {"tacho0",tacho0},{"tacho1",tacho1},
       {"motor_L",motor_L},{"motor_R",motor_R},
       {"long_straight",long_straight},
-      {"slope_diff", slope_diff}
+      {"slope_diff", slope_diff},
+      {"row_turn", row_turn_after_straight},
+      {"cross_found", cross_found}
+      
 
       //{"C.r",C.r},{"C.sign",C.sign}
     },
@@ -128,6 +131,32 @@ void displayParameters()//menu==1
       {"weight[road_state][3]",weight[road_state][3]*10},      {"weight[road_state][4]",weight[road_state][4]*10},        {"weight[road_state][5]",weight[road_state][5]*10},
       {"weight[road_state][6]",weight[road_state][6]*10},      {"weight[road_state][7]",weight[road_state][6]*10},        {"weight[road_state][8]",weight[road_state][8]*10},
       {"weight[road_state][9]",weight[road_state][9]*10},          {"",0}
+    },
+    {
+      {"curvatureL[0]", curvatureL[0]},
+      {"curvatureL[1]", curvatureL[1]},
+      {"curvatureL[2]", curvatureL[2]},
+      {"curvatureL[3]", curvatureL[3]},
+      {"curvatureL[4]", curvatureL[4]},
+      {"curvatureL[5]", curvatureL[5]},
+      {"curvatureL[6]", curvatureL[6]},
+      {"curvatureL[7]", curvatureL[7]},
+      {"curvatureL[8]", curvatureL[8]},
+      {"curvatureL[9]", curvatureL[9]},
+      {"curvatureL[10]", curvatureL[10]},
+      {"curvatureL[11]", curvatureL[11]},
+      {"curvatureL[12]", curvatureL[12]},
+      {"curvatureL[13]", curvatureL[13]},
+      {"curvatureL[14]", curvatureL[14]},
+      {"curvatureL[15]", curvatureL[15]},
+      {"curvatureL[16]", curvatureL[16]},
+      {"curvatureL[17]", curvatureL[17]},
+      {"curvatureL[18]", curvatureL[18]},
+      {"curvatureL[19]", curvatureL[19]},
+      {"curvatureL[20]", curvatureL[20]},
+      {"curvatureL[21]", curvatureL[21]},
+      {"curvatureL[22]", curvatureL[22]},
+      {"curvatureL[23]", curvatureL[23]}
     }
    /* {
       {"cam_buf[60]",cam_buffer[60][60]},

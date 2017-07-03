@@ -28,6 +28,8 @@ u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍
                   //2 状态下减速
 u8 long_straight = 0;//0 long straight road not found, 1 found, ready for overtaking
 u8 cross_found = 0;//0 crossroads not found, 1 found;
+int slope[24];
+int curvatureL[23], curvatureR[23];
 
 int slope_diff = 0;
 
@@ -49,8 +51,9 @@ int OBSTACLE_THR=40;  //有障碍物时赛道宽度阈值
 
 // ---- Local ----
 u8 cam_row = 0, img_row = 0;
-int slope[12];
+
 int slope_ave;
+int row_turn_after_straight = 0;
 /*
 //——————透视变换·变量——————
 double matrix[4][4];
@@ -243,6 +246,13 @@ void Cam_B_Init()//初始化Cam_B
 //double theta,theta_d,slope,test;
 //double x,y;
 
+int abss(int input)
+{
+  if(input>=0)
+    return input;
+  else return 0-input;
+}
+
   //第一次进化版巡线程序
 void Cam_B(){
   
@@ -250,6 +260,7 @@ void Cam_B(){
   
     float max_speed=MAX_SPEED+debug_speed;//最大速度
     static int dir;//舵机输出
+    int curvatureL[23], curvatureR[23];
     
     //================================透视变化
     //getMatrix(0.785398,1.0,1.0,1000);
@@ -320,7 +331,9 @@ void Cam_B(){
     */
     //横向扫描方案
     slope_diff = 0;
-    for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描
+    row_turn_after_straight = 24;
+    
+    for(int j=0;j < ROAD_SIZE;j++)//从下向上扫描
     {
       int i;
       //left
@@ -335,14 +348,22 @@ void Cam_B(){
           break;
         }
       road_B[j].right = i;
+      
       if(road_B[j].left == 0 && road_B[j].right == CAM_WID)
         cross_found = 1;
-      if(j > 2 && j < 20
-               && (road_B[j].left - 2 * road_B[j-1].left + road_B[j-2].left) < -5
-               && (road_B[j].right - 2 * road_B[j-1].right + road_B[j-2].right) > 5)
+      
+      if(j > 1)
       {
-        //cross_found = 1;
+        curvatureL[j-2] = road_B[j].left - 2 * road_B[j-1].left + road_B[j-2].left;
+        curvatureR[j-2] = road_B[j].right - 2 * road_B[j-1].right + road_B[j-2].right;
       }
+      
+      if(j > 1 && row_turn_after_straight == 24 && (curvatureL[j-2] < -4 || curvatureR[j-2] > 4 /*|| road_B[j].left == road_B[j].right*/))
+        row_turn_after_straight = j;
+      
+      if(j > 1 && j < 10 && cross_found == 0 && curvatureL[j-2] < -12 && curvatureR[j-2] > 12)
+        cross_found = 1;
+      
       //mid
       road_B[j].mid = (road_B[j].left + road_B[j].right)/2;//分别计算并存储25行的mid
       //store
@@ -350,20 +371,22 @@ void Cam_B(){
         road_B[j+1].mid=road_B[j].mid;//后一行从前一行中点开始扫描
     }
     
-    for(int i = 0;i < 12; i++)
+    for(int i = 0;i < 24; i++)
     {
-      slope[i] = road_B[i*2+2].left - road_B[i*2].left;
+      slope[i] = road_B[i+1].left - road_B[i].left;
       slope_ave += slope[i];
     }
-    slope_ave /= 12;
-    for(int i = 0; i < 12; i++)
+    slope_ave /= 24;
+    
+    for(int i = 0; i < 24 && (i+1) < row_turn_after_straight; i++)
     {
-      slope_diff += abs(slope[i] - slope_ave);
+      slope_diff += abss(slope[i] - slope_ave);
     }
       
     //===========================区分前方道路类型//需要设置一个优先级！！！
     static int mid_ave3;
     bool flag_valid_row=0;
+    
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)
     {
       mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
@@ -374,19 +397,18 @@ void Cam_B(){
       }
       else valid_row=ROAD_SIZE-3;
     }
+    
     if(valid_row < valid_row_thr)
     {
       road_state=2;//弯道
       //long_straight = 0;
     }
     else road_state=1;//直道
-    if(valid_row > long_straight_thr && cross_found == 0 /*&& slope_diff < 35*/)
+    
+    if(valid_row > long_straight_thr && slope_diff < 30 /*&& cross_found == 0  && row_turn_after_straight > 10*/)
     {
-      if(abs((road_B[valid_row - 2].mid - road_B[valid_row - 14].mid) - (road_B[valid_row - 8].mid - road_B[1].mid)) < 3)
-      {//曲率突变也可以当成判据
-        long_straight = 1;
-        UART_SendChar('L');
-      }
+      long_straight = 1;
+      //UART_SendChar('L');
     }
     else long_straight = 0;
     
@@ -502,12 +524,12 @@ void Cam_B(){
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
     if(dir>0)
       dir*=1.5;//修正舵机左右不对称的问题//不可删  + right; - left
-    else dir*=1.2;
+    else dir*=1.3;
     last_err = err;
     
     dir=constrainInt(-220,220,dir);
     if(long_straight == 1)
-      dir = dir - 80;//向左贴边
+      dir = dir - 90;//向左贴边
     if(car_state!=0)
       Servo_Output(dir);
     else

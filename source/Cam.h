@@ -82,6 +82,8 @@ extern int c1, c2, c3;
 extern u8 long_straight;
 extern u8 cross_found;
 extern int slope_diff;
+extern int row_turn_after_straight;
+extern int curvatureL[23],curvatureR[23];
 
 void Cam_B_Init();//初始化Cam_B
 float constrain(float lowerBoundary, float upperBoundary, float input);//控制上下限的函数
@@ -89,6 +91,7 @@ int constrainInt(int lowerBoundary, int upperBoundary, int input);//控制上下限的
 circle getR(float x1, float y1, float x2, float y2, float x3, float y3);//得到前方曲率圆
 bool is_stop_line(int target_line);//判断是否为终止行/起点行
 double getSlope_(int x1, int y1, int x2, int y2);//得到斜率的倒数
+int abss(int input);
 //——————透视变换
 /*
 extern u8 cam_buffer2[64][128];
