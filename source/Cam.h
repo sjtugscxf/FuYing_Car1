@@ -99,4 +99,25 @@ void getNewBuffer();*/
 extern double theta;
 extern double x,y;
 
+//环岛相关=========
+extern int roundabout_state;//0-非环岛 1-入环岛（有分支） 2-在环岛 3-出环岛（有分支）
+extern int roundabout_choice;//0-未选择 1-左 2-右 3-左右皆可
+extern int cnt_miss; //累计未判断成环岛的次数
+extern bool former_choose_left,former_choose_right;//0=choose 1=not choose
+extern bool is_cross; //判断是否是十字
+extern int jump[2][2];//存拐点坐标 0左 1右 0-x 1-y  //与cambuffer的坐标对应
+extern int jump_thr;
+extern bool flag_left_jump,flag_right_jump;
+extern bool jump_miss; // 记录连续未检测到拐点的次数
+extern int forced_turn;
+extern int check_farthest;
+extern int check_near;
+extern int road_width_thr;
+//==============
+
+//为解决cam_buffer抖动问题设置路径边缘深度缓冲============
+#define DEPTH 5                //初步设为5层缓冲
+extern int left[DEPTH][ROAD_SIZE];
+extern int right[DEPTH][ROAD_SIZE];
+
 #endif
