@@ -650,7 +650,7 @@ void Cam_B(){
                                         //另一办法是检测分道是否存在，猜想：通过观察较近处的路宽判断是否会有分道
                                         //（尝试如下，在road_B[check_near]处检测，若right-left大于road_width_max（可调参），则利用roundabout_choice将mid_ave左移或右移）
           //  }
-            for(int i=0;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
+            for(int i=1;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
               if(roundabout_choice==1) road_B[i].mid *= 0.2;
               else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.75);
             }
@@ -665,26 +665,25 @@ void Cam_B(){
           
           //用来检测什么时候出现分叉
           time_cnt++;
-          if(isWider(check_near) && time_cnt>=500){//如果路过于宽，认为出现分叉//该判断不对！！！！！！！！！！！！！！！！！！！！！！
-            roundabout_state=0;
+          if(road_B[40].mid>(CAM_WID/2-10) && road_B[40].mid<(CAM_WID/2+10) && cam_buffer[20][raod_B[40].mid]>thr && time_cnt>=500){//如果路过于宽，认为出现分叉//该判断不对！！！！！！！！！！！！！！！！！！！！！！
+            roundabout_state=4;
             time_cnt=0;
           }
-          else if(time_cnt>5000) roundabout_state=0;
+          else if(time_cnt>10000) roundabout_state=0;
           //如果未检测到，时间又长，说明已经出环岛，该情形下的代码未写………………………………可能会因此而出不了环岛锁定状态……………………………………
             //暂不考虑这种情况，因为大环岛与小环岛用时不同，不可一概而论，（更佳方案是检测纯直道，作为出岛标志）
           break;
-    /*    case 4://出环岛，又一次分道
+        case 4://出环岛，又一次分道
           time_cnt++;
-          for(int i=0;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
-            if(roundabout_choice==1) road_B[i].mid /= 2;
-            else if(roundabout_choice==2) road_B[i].mid *= 1.5;
+          for(int i=1;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
+            if(roundabout_choice==1) road_B[i].mid = CAM_WID/2;
+            else if(roundabout_choice==2) road_B[i].mid = CAM_WID/2;
           }
-          if(!isWider(check_near) && time_cnt>=500){ //如果路宽回复正常，认为出环岛
+          if((!isWider(check_near) && time_cnt>=500) || time_cnt>2000){ //如果路宽回复正常，认为出环岛
             roundabout_state=0;
             time_cnt=0;
           }
           break;
-          */
         default:break;
         }
         
