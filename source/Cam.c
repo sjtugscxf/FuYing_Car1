@@ -337,10 +337,12 @@ void Cam_B(){
       road_B[j].right = i;
       if(road_B[j].left == 0 && road_B[j].right == CAM_WID)
         cross_found = 1;
-      /*if(j > 2 && j < 20
+      if(j > 2 && j < 20
                && (road_B[j].left - 2 * road_B[j-1].left + road_B[j-2].left) < -5
                && (road_B[j].right - 2 * road_B[j-1].right + road_B[j-2].right) > 5)
-        cross_found = 1;*/
+      {
+        //cross_found = 1;
+      }
       //mid
       road_B[j].mid = (road_B[j].left + road_B[j].right)/2;//分别计算并存储25行的mid
       //store
@@ -348,16 +350,16 @@ void Cam_B(){
         road_B[j+1].mid=road_B[j].mid;//后一行从前一行中点开始扫描
     }
     
-    /*for(int i = 0;i < 12; i++)
+    for(int i = 0;i < 12; i++)
     {
-      slope[i] = road_B[i*2+2].mid - road_B[i*2].mid;
+      slope[i] = road_B[i*2+2].left - road_B[i*2].left;
       slope_ave += slope[i];
     }
     slope_ave /= 12;
     for(int i = 0; i < 12; i++)
     {
-      slope_diff += (slope[i] - slope_ave)*(slope[i] - slope_ave);
-    }*/
+      slope_diff += abs(slope[i] - slope_ave);
+    }
       
     //===========================区分前方道路类型//需要设置一个优先级！！！
     static int mid_ave3;
@@ -499,16 +501,16 @@ void Cam_B(){
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
     if(dir>0)
-      dir*=1.5;//修正舵机左右不对称的问题//不可删
+      dir*=1.5;//修正舵机左右不对称的问题//不可删  + right; - left
     else dir*=1.2;
     last_err = err;
     
     dir=constrainInt(-220,220,dir);
     if(long_straight == 1)
-      dir = dir - 80;
+      dir = dir - 80;//向左贴边
     if(car_state!=0)
       Servo_Output(dir);
-    else   
+    else
       Servo_Output(0);
     
     
@@ -526,7 +528,7 @@ void Cam_B(){
         if(dir>0) motor_R=constrain(MIN_SPEED,motor_R,motor_R*0.9);//右转
         else motor_L=constrain(MIN_SPEED,motor_L,motor_L*0.9);//0.9
       }
-      else if(abs(dir)<185){    
+      else if(abs(dir)<185){
         motor_L=motor_R=max_speed-0.33*range-0.33*range*(abs(dir)-95)/90;
         if(dir>0) motor_R=constrain(MIN_SPEED,motor_R,motor_R*0.8);//右转
         else motor_L=constrain(MIN_SPEED,motor_L,motor_L*0.8);//0/75
