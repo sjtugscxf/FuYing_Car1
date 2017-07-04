@@ -358,7 +358,7 @@ void Cam_B(){
         curvatureR[j-2] = road_B[j].right - 2 * road_B[j-1].right + road_B[j-2].right;
       }
       
-      if(j > 1 && row_turn_after_straight == 24 && (curvatureL[j-2] < -4 || curvatureR[j-2] > 4 /*|| road_B[j].left == road_B[j].right*/))
+      if(j > 1 && row_turn_after_straight == 24 && (curvatureL[j-2] < -5 || curvatureR[j-2] > 5 /*|| road_B[j].left == road_B[j].right*/))
         row_turn_after_straight = j;
       
       if(j > 1 && j < 10 && cross_found == 0 && curvatureL[j-2] < -12 && curvatureR[j-2] > 12)

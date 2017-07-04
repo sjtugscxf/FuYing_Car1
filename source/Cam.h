@@ -83,6 +83,7 @@ extern u8 long_straight;
 extern u8 cross_found;
 extern int slope_diff;
 extern int row_turn_after_straight;
+extern int slope[24];
 extern int curvatureL[23],curvatureR[23];
 
 void Cam_B_Init();//≥ı ºªØCam_B

@@ -2,7 +2,7 @@
 #define OLED_UI_H
 
 #define Rows 26
-#define Pages 4
+#define Pages 5
 
 //=== Global variables===
 extern u8 oled_menu;
