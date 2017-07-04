@@ -6,7 +6,7 @@
 u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
 //通用·赛道识别================================
-int MAX_SPEED=20;
+int MAX_SPEED=24;
 int MIN_SPEED=12;
 Road road_B[ROAD_SIZE];//由近及远存放
 float mid_ave;//road中点加权后的值
@@ -276,7 +276,7 @@ bool is_hole(int row)
         i++;
       }
     }
-    bool static hole=0;
+   // bool static hole=0;
     if(left>=1 && right>=1)
       return 1;
     else return 0;
@@ -632,8 +632,9 @@ void Cam_B(){
         case 1:
           if(roundabout_choice==0){
             //暂时用右转代替最短路径（注意：小环岛最短路径影响不大，大环岛能否看到出岛位置则是个问题）
-            roundabout_choice=1;
+            roundabout_choice=SW1()+1;
           }
+          road_width_thr=90;
           if(isWider(check_near)){//如果路过于宽，认为出现分叉，开始转弯
             roundabout_state=2;
             time_cnt=0;
@@ -650,11 +651,12 @@ void Cam_B(){
                                         //另一办法是检测分道是否存在，猜想：通过观察较近处的路宽判断是否会有分道
                                         //（尝试如下，在road_B[check_near]处检测，若right-left大于road_width_max（可调参），则利用roundabout_choice将mid_ave左移或右移）
           //  }
-            for(int i=0;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
-              if(roundabout_choice==1) road_B[i].mid *= 0.2;
+            for(int i=1;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
+              if(roundabout_choice==1) road_B[i].mid *= 0.18;
               else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.75);
             }
-            if(!isWider(check_near) && time_cnt>250){ //如果路宽恢复正常，认为完成入岛
+            road_width_thr=100;
+            if(!isWider(check_near) && time_cnt>500){ //如果路宽恢复正常，认为完成入岛//^……………………………………………………此处不能脱离状态！！！！！！！！！！！！
               roundabout_state=3;
               time_cnt=0;
             }
@@ -665,26 +667,27 @@ void Cam_B(){
           
           //用来检测什么时候出现分叉
           time_cnt++;
-          if(isWider(check_near) && time_cnt>=500){//如果路过于宽，认为出现分叉//该判断不对！！！！！！！！！！！！！！！！！！！！！！
-            roundabout_state=0;
+          if(road_B[45].mid<40 && cam_buffer[60-45][road_B[45].mid]>thr && time_cnt>=500){
+            roundabout_state=4;
             time_cnt=0;
           }
-          else if(time_cnt>5000) roundabout_state=0;
+          else if(time_cnt>10000) roundabout_state=0;
           //如果未检测到，时间又长，说明已经出环岛，该情形下的代码未写………………………………可能会因此而出不了环岛锁定状态……………………………………
             //暂不考虑这种情况，因为大环岛与小环岛用时不同，不可一概而论，（更佳方案是检测纯直道，作为出岛标志）
           break;
-    /*    case 4://出环岛，又一次分道
+        case 4://出环岛，又一次分道
           time_cnt++;
-          for(int i=0;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
-            if(roundabout_choice==1) road_B[i].mid /= 2;
-            else if(roundabout_choice==2) road_B[i].mid *= 1.5;
+          for(int i=1;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
+            if(roundabout_choice==1) road_B[i].mid = CAM_WID/2-25;
+            else if(roundabout_choice==2) road_B[i].mid = CAM_WID/2+25;
           }
+          road_width_thr=70;
           if(!isWider(check_near) && time_cnt>=500){ //如果路宽回复正常，认为出环岛
             roundabout_state=0;
             time_cnt=0;
           }
+          else if(time_cnt>2000) roundabout_state=0;
           break;
-          */
         default:break;
         }
         
@@ -831,7 +834,7 @@ void Cam_B(){
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
     if(dir>0)
-      dir*=1.5;//修正舵机左右不对称的问题//不可删
+      dir*=1.3;//修正舵机左右不对称的问题//不可删
     last_err = err;
     
     dir=constrainInt(-230,230,dir);
