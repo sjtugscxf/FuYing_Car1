@@ -8,7 +8,7 @@
 void UART_SendDataHead();
 void UART_SendData(s16 data);
 
-
+extern bool run_informed_flag;
 // ---- Basic ----
 
 void UART_Init(u32);

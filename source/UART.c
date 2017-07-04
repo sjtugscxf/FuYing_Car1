@@ -6,7 +6,7 @@ License : MIT
 
 #include "includes.h"
 
-
+bool run_informed_flag = 0;
 
 // === Receive ISR ===
 void UART3_IRQHandler(void){
@@ -18,8 +18,10 @@ void UART3_IRQHandler(void){
      remote_state = 3;
      UART_SendString("turn right");//
    }else if (tmp == 'w'){
-     remote_state = 1;
-     UART_SendString("go ahead");
+     //remote_state = 1;
+     //UART_SendString("go ahead");
+     run_informed_flag = 1;
+     flag_stop = 0;
    }else if (tmp == 's'){
      remote_state = 0;
      UART_SendString("stop");

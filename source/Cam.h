@@ -120,4 +120,6 @@ extern double x,y;
 #define DEPTH 5                //³õ²½ÉèÎª5²ã»º³å
 extern int left[DEPTH][ROAD_SIZE];
 extern int right[DEPTH][ROAD_SIZE];
+
+extern bool flag_stop;
 #endif

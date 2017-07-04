@@ -667,7 +667,7 @@ void Cam_B(){
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
           
-          if(time_cnt>100&&time_cnt<4300)
+          if(time_cnt>100&&time_cnt<4300 && run_informed_flag==0)
             flag_stop=1;
           else flag_stop=0;
           
