@@ -99,15 +99,17 @@ void displayParameters()//menu==1
   Putboth outpair[Pages][Rows]={
     {
   {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
-  {"check near wid",road_B[check_near].right-road_B[check_near].left},
-  {"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
+  //{"check near wid",road_B[check_near].right-road_B[check_near].left},
+  //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
+  {"valid_row",valid_row}, 
+  {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
   {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
   {"forced_turn",forced_turn},
   {"jump_miss",jump_miss},
   {"cnt_miss",cnt_miss},        {"f_ch_left",former_choose_left},{"f_ch_right",former_choose_right},
   {"is_cross",is_cross},
-  //{"valid_row",valid_row}, 
+  //
       {"battery",battery},    
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
@@ -222,14 +224,14 @@ void displayDebug()//menu==3
     if(!Key3() && flag_down==0) {debug_dir.kd-=0.1;flag_down=1;}
     break;
   case 2:
-    Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,max_speed);
-    if(!Key2() && flag_down==0) {max_speed+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && max_speed>min_speed+1) {max_speed-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,MAX_SPEED);
+    if(!Key2() && flag_down==0) {MAX_SPEED+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && max_speed>min_speed+1) {MAX_SPEED-=1;flag_down=1;}
     break;
   case 3:
-    Oled_Putstr(6,0,"Debugging MinSpeed"); Oled_Putnum(7,11,min_speed);
-    if(!Key2() && flag_down==0) {min_speed+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && min_speed>1) {min_speed-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging MinSpeed"); Oled_Putnum(7,11,MIN_SPEED);
+    if(!Key2() && flag_down==0) {MIN_SPEED+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && MIN_SPEED>1) {min_speed-=1;flag_down=1;}
     break;
   case 4:
     Oled_Putstr(6,0,"Debugging jump_thr"); Oled_Putnum(7,11,jump_thr);

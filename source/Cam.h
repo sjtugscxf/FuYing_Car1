@@ -34,13 +34,13 @@ void Cam_Algorithm();
 void Cam_Init();
 
 //==============CAM_B===========
-#define CAM_WID 132//摄像头有效宽度//与摄像头安放位置有关//120//132
+#define CAM_WID 134//摄像头有效宽度//与摄像头安放位置有关//120//132
 #define thr 70//黑白阈值，目前无需调
 #define ROAD_WID 30//道路宽度，未知，需要在透视变换后使用、、、、、、、、、、
-#define Dir_Kp 5    //舵机比例控制参数
-#define Dir_Kd 4  //舵机微分控制参数
-#define MAX_SPEED 20 //直道最大速度/////////////////////////26为现在的极限
-#define MIN_SPEED 12 //弯道最大速度////////////////////////不确定
+#define Dir_Kp 7.5    //舵机比例控制参数
+#define Dir_Kd 4.25  //舵机微分控制参数
+extern int MAX_SPEED; //直道最大速度/////////////////////////26为现在的极限
+extern int MIN_SPEED; //弯道最大速度////////////////////////不确定
 #define ROAD_SIZE 50 //利用的摄像头数据行数
 #define WEIGHT_SIZE 10 //实际加权并控制舵机的行数
 #define MaxWeight_index 7 //最大weight的下标，范围是0-9
@@ -106,6 +106,7 @@ extern bool former_choose_left,former_choose_right;//0=choose 1=not choose
 extern bool is_cross; //判断是否是十字
 extern int jump[2][2];//存拐点坐标 0左 1右 0-x 1-y  //与cambuffer的坐标对应
 extern int jump_thr;
+extern bool flag_left_jump,flag_right_jump;
 extern bool jump_miss; // 记录连续未检测到拐点的次数
 extern int forced_turn;
 extern int check_farthest;
