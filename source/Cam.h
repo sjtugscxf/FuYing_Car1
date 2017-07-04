@@ -82,6 +82,7 @@ extern int c1, c2, c3;
 extern u8 long_straight;
 extern u8 cross_found;
 extern int slope_diff;
+extern int curv_diff;
 extern int row_turn_after_straight;
 extern int slope[24];
 extern int curvatureL[23],curvatureR[23];

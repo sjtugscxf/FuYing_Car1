@@ -32,6 +32,7 @@ int slope[24];
 int curvatureL[23], curvatureR[23];
 
 int slope_diff = 0;
+int curv_diff = 0;
 
 float motor_L=MIN_SPEED;
 float motor_R=MIN_SPEED;
@@ -52,7 +53,7 @@ int OBSTACLE_THR=40;  //有障碍物时赛道宽度阈值
 // ---- Local ----
 u8 cam_row = 0, img_row = 0;
 
-int slope_ave;
+int slope_ave = 0, curv_ave = 0;
 int row_turn_after_straight = 0;
 /*
 //——————透视变换·变量——————
@@ -260,7 +261,7 @@ void Cam_B(){
   
     float max_speed=MAX_SPEED+debug_speed;//最大速度
     static int dir;//舵机输出
-    int curvatureL[23], curvatureR[23];
+    //int curvatureL[23], curvatureR[23];
     
     //================================透视变化
     //getMatrix(0.785398,1.0,1.0,1000);
@@ -331,6 +332,7 @@ void Cam_B(){
     */
     //横向扫描方案
     slope_diff = 0;
+    curv_diff = 0;
     row_turn_after_straight = 24;
     
     for(int j=0;j < ROAD_SIZE;j++)//从下向上扫描
@@ -371,6 +373,7 @@ void Cam_B(){
         road_B[j+1].mid=road_B[j].mid;//后一行从前一行中点开始扫描
     }
     
+    slope_ave = 0;
     for(int i = 0;i < 24; i++)
     {
       slope[i] = road_B[i+1].left - road_B[i].left;
@@ -378,9 +381,21 @@ void Cam_B(){
     }
     slope_ave /= 24;
     
+    curv_ave = 0;
+    for(int i = 0;i < 23; i++)
+    {
+      curv_ave += curvatureL[i];
+    }
+    curv_ave /= 23;
+    
     for(int i = 0; i < 24 && (i+1) < row_turn_after_straight; i++)
     {
       slope_diff += abss(slope[i] - slope_ave);
+    }
+    
+    for(int i = 0; i < 23 && (i+2) < row_turn_after_straight; i++)
+    {
+      curv_diff += abss(curvatureL[i] - curv_ave);
     }
       
     //===========================区分前方道路类型//需要设置一个优先级！！！

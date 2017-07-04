@@ -107,6 +107,7 @@ void displayParameters()//menu==1
       {"motor_L",motor_L},{"motor_R",motor_R},
       {"long_straight",long_straight},
       {"slope_diff", slope_diff},
+      {"curv_diff", curv_diff},
       {"row_turn", row_turn_after_straight},
       {"cross_found", cross_found}
       
