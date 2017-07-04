@@ -6,7 +6,7 @@
 u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
 //通用·赛道识别================================
-int MAX_SPEED=24;
+int MAX_SPEED=18;
 int MIN_SPEED=12;
 Road road_B[ROAD_SIZE];//由近及远存放
 float mid_ave;//road中点加权后的值
@@ -52,6 +52,8 @@ float motor_L;//=MIN_SPEED;
 float motor_R;//=MIN_SPEED;
 float max_speed;//=MAX_SPEED;
 float min_speed;//=MIN_SPEED;
+
+bool flag_stop=0;
 
 //OLED调参
 int debug_speed=0;
@@ -665,13 +667,18 @@ void Cam_B(){
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
           
+          if(time_cnt>100&&time_cnt<4300)
+            flag_stop=1;
+          else flag_stop=0;
+          
           //用来检测什么时候出现分叉
           time_cnt++;
           if(road_B[45].mid<40 && cam_buffer[60-45][road_B[45].mid]>thr && time_cnt>=500){
             roundabout_state=4;
             time_cnt=0;
+            flag_stop=0;
           }
-          else if(time_cnt>10000) roundabout_state=0;
+          else if(time_cnt>10000) {roundabout_state=0;flag_stop=0;}
           //如果未检测到，时间又长，说明已经出环岛，该情形下的代码未写………………………………可能会因此而出不了环岛锁定状态……………………………………
             //暂不考虑这种情况，因为大环岛与小环岛用时不同，不可一概而论，（更佳方案是检测纯直道，作为出岛标志）
           break;
@@ -853,7 +860,8 @@ void Cam_B(){
     //PWM以dir为参考，前期分级控制弯道速度；中期分段线性控速；后期找到合适参数的时候，再进行拟合——PWM关于dir的函数
     min_speed=MIN_SPEED;
     float range=constrain(0,50,max_speed-min_speed);//速度范围大小 
-    if(car_state==2 ){
+    if(flag_stop==1) PWM(0, 0, &L, &R); 
+    else if(car_state==2 ){
       //分段线性控速
       if(abs(dir)<50 ){//&& valid_row>valid_row_thr
         motor_L=motor_R=max_speed;
