@@ -435,9 +435,10 @@ void Cam_B(){
         valid_row=i_valid;
       }
      // else valid_row=ROAD_SIZE-3;
-      if (left3<33 && right3>80){
+      if (left3<35 && right3>95){
         flag_valid_row=1;
         flag_cross=1;
+        road_state=5;
       }
     }
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
@@ -831,7 +832,7 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if (cross_cnt < 4400){
+        if (cross_cnt > 600 && cross_cnt < 4400){
           PWM(0, 0, &L, &R);
         }
         else{

@@ -76,6 +76,7 @@ extern u8 road_state;//前方道路状态
 
 extern int left3;
 extern int right3;
+extern int flag_cross;
 
 extern float motor_L;
 extern float motor_R;
