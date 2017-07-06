@@ -32,32 +32,33 @@ void Cam_Algorithm();
 
   // Init
 void Cam_Init();
-
-//==============CAM_B===========
-#define CAM_WID 134//摄像头有效宽度//与摄像头安放位置有关//120//132
-#define thr 70//黑白阈值，目前无需调
-#define ROAD_WID 30//道路宽度，未知，需要在透视变换后使用、、、、、、、、、、
-#define Dir_Kp 7.5    //舵机比例控制参数
+//特别声明======================
+#define CAM_WID 134//摄像头有效宽度//与摄像头安放位置有关//正常值128
+#define Dir_Kp 7.75    //舵机比例控制参数
 #define Dir_Kd 4.25  //舵机微分控制参数
 extern int MAX_SPEED; //直道最大速度/////////////////////////26为现在的极限
 extern int MIN_SPEED; //弯道最大速度////////////////////////不确定
+//==============CAM_B===========
+#define thr 70//黑白阈值，目前无需调
+//#define ROAD_WID 30//道路宽度，未知，需要在透视变换后使用、、、、、、、、、、
 #define ROAD_SIZE 50 //利用的摄像头数据行数
 #define WEIGHT_SIZE 10 //实际加权并控制舵机的行数
-#define MaxWeight_index 7 //最大weight的下标，范围是0-9
-#define MaxWeight 6.0 //最大weight权值
-#define exp_k 0.3 //给正态分布的指数项乘一个因子，使曲线扁平
+//#define MaxWeight_index 7 //最大weight的下标，范围是0-9
+//#define MaxWeight 6.0 //最大weight权值
+//#define exp_k 0.3 //给正态分布的指数项乘一个因子，使曲线扁平
 //#define CAM_HOLE_ROW 15 //用来向两边扫描检测黑洞·环岛的cam_buffer行位置
 extern int CAM_HOLE_ROW; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置
 typedef struct {
   int left;
   int right;
   int mid;
+  int width;
  // double slope_;//slpoe_=dx/dy
 }Road;//由近及远存放
-/*typedef struct {
+typedef struct {
   float r;
   bool sign;
-}circle;*/
+}circle;
 /*typedef struct{
   int down;
   int up;
@@ -73,9 +74,6 @@ extern int valid_row_thr;//有效行阈值
 extern u8 car_state;//智能车状态
 extern u8 remote_state;//远程控制
 extern u8 road_state;//前方道路状态
-extern u8 is_stopline;
-extern u8 cnt_zebra;
-extern u8 delay_zebra1, delay_zebra2;//1 for the first, should pass; 2 for the second, should stop
 
 extern float motor_L;
 extern float motor_R;
@@ -85,12 +83,13 @@ extern float min_speed;
 
 extern PIDInfo debug_dir;
 extern int margin;
+extern circle road_C;
 
 void Cam_B_Init();//初始化Cam_B
 float constrain(float lowerBoundary, float upperBoundary, float input);//控制上下限的函数
 int constrainInt(int lowerBoundary, int upperBoundary, int input);//控制上下限的函数(integer专用)
 //circle getR(float x1, float y1, float x2, float y2, float x3, float y3);//得到前方曲率圆
-bool is_stop_line(int target_line);//判断是否为终止行/起点行
+//bool is_stop_line();//判断是否为终止行/起点行
 double getSlope_(int x1, int y1, int x2, int y2);//得到斜率的倒数
 //——————透视变换
 /*
@@ -104,23 +103,26 @@ void getNewBuffer();*/
 //环岛相关=========
 extern int roundabout_state;//0-非环岛 1-入环岛（有分支） 2-在环岛 3-出环岛（有分支）
 extern int roundabout_choice;//0-未选择 1-左 2-右 3-左右皆可
-extern int cnt_miss; //累计未判断成环岛的次数
-extern bool former_choose_left,former_choose_right;//0=choose 1=not choose
-extern bool is_cross; //判断是否是十字
+//extern int cnt_miss; //累计未判断成环岛的次数
+//extern bool former_choose_left,former_choose_right;//0=choose 1=not choose
+//extern bool is_cross; //判断是否是十字
 extern int jump[2][2];//存拐点坐标 0左 1右 0-x 1-y  //与cambuffer的坐标对应
 extern int jump_thr;
 extern bool flag_left_jump,flag_right_jump;
-extern bool jump_miss; // 记录连续未检测到拐点的次数
-extern int forced_turn;
-extern int check_farthest;
-extern int check_near;
-extern int road_width_thr;
+//extern bool jump_miss; // 记录连续未检测到拐点的次数
+//extern int forced_turn;
+extern int check_round_farthest;
+extern int road_B_near;
+extern int road_B_far;
+extern int road_width_near;
+extern int road_width_far;
+extern double suml,sumr;
 //==============
 //test
-extern double theta;
-extern double x,y;
+//extern double theta;
+//extern double x,y;
 //为解决cam_buffer抖动问题设置路径边缘深度缓冲============
-#define DEPTH 5                //初步设为5层缓冲
-extern int left[DEPTH][ROAD_SIZE];
-extern int right[DEPTH][ROAD_SIZE];
+//#define DEPTH 5                //初步设为5层缓冲
+//extern int left[DEPTH][ROAD_SIZE];
+//extern int right[DEPTH][ROAD_SIZE];
 #endif
