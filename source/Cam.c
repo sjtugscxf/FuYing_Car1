@@ -27,6 +27,8 @@ u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
                   //2 状态下减速
 int margin=30;//弯道判断条件
 //十字弯处理========================================
+int left3;
+int right3;
 int flag_cross=0; //十字的判断条件
 int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
@@ -420,8 +422,6 @@ void Cam_B(){
       
     //区分前方道路类型===========================环岛优先级最高
     static int mid_ave3;
-    static int left3;
-    static int right3;
     static bool flag_valid_row=0;
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)     //寻找有效行
     {

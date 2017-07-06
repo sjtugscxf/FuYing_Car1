@@ -101,6 +101,8 @@ void displayParameters()//menu==1
   {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
   //{"check near wid",road_B[check_near].right-road_B[check_near].left},
   //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
+  {"left3", left3},
+  {"right3", right3},
   {"valid_row",valid_row}, 
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
