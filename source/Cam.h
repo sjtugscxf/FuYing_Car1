@@ -73,6 +73,9 @@ extern int valid_row_thr;//有效行阈值
 extern u8 car_state;//智能车状态
 extern u8 remote_state;//远程控制
 extern u8 road_state;//前方道路状态
+extern u8 is_stopline;
+extern u8 cnt_zebra;
+extern u8 delay_zebra1, delay_zebra2;//1 for the first, should pass; 2 for the second, should stop
 
 extern float motor_L;
 extern float motor_R;

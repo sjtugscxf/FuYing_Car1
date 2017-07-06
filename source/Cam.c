@@ -24,6 +24,9 @@ int valid_row_thr=30;//有效行阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
 u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
+u8 is_stopline = 0;
+u8 cnt_zebra = 0;
+u8 delay_zebra1 = 0, delay_zebra2 = 0;
                   //2 状态下减速
 int margin=30;//弯道判断条件
 //环岛处理========================================
@@ -198,7 +201,20 @@ circle getR(float x1, float y1, float x2, float y2, float x3, float y3)
 */
 bool is_stop_line(int target_line)//目测并不有效……
 {
-  if((road_B[target_line].right-road_B[target_line].left)<ROAD_WID)
+  /*if((road_B[target_line].right-road_B[target_line].left)<ROAD_WID)
+    return 1;
+  else return 0;*/
+  
+  cnt_zebra = 0;
+  for(int i = 0; i < CAM_WID-5; i++)
+  {
+    if(cam_buffer[target_line][i] > thr
+     &&cam_buffer[target_line][i+1] > thr
+     &&cam_buffer[target_line][i+2] < thr
+     /*&&cam_buffer[target_line][i+3] < thr*/)
+      cnt_zebra++;
+  }
+  if(cnt_zebra > 5)
     return 1;
   else return 0;
 }
@@ -377,6 +393,25 @@ void Cam_B(){
     
  //   k_depth++;
  //   k_depth%=DEPTH;
+    //判断停车线-----------------------------------------------------
+    if(is_stopline == 0 && is_stop_line(40) == 1)
+    {
+      is_stopline++;
+      delay_zebra1 = 20;
+    }
+    else if(is_stopline == 1 && delay_zebra1 == 0 && is_stop_line(40) == 1)
+    {
+      is_stopline++;
+      delay_zebra1 = 20;
+    }
+    else if(is_stopline == 2 && delay_zebra1 == 0 && is_stop_line(50) == 1)
+    {
+      is_stopline++;
+      delay_zebra2 = 5;
+    }
+    else if(is_stopline == 3 && delay_zebra2 == 0)
+      is_stopline++;
+    
     //横向扫描方案============================================================
     for(int j=0;j<ROAD_SIZE;j++)//从下向上扫描
     {
@@ -842,9 +877,12 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
+    if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
+      dir = 0;
+    
     if(car_state!=0)
       Servo_Output(dir);
-    else   
+    else
       Servo_Output(0);
     
     
@@ -876,7 +914,9 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      PWM(motor_L, motor_R, &L, &R);               //后轮速度
+      if(is_stopline == 4)
+        PWM(0, 0, &L, &R);
+      else PWM(motor_L, motor_R, &L, &R);               //后轮速度
     }
    else
    {
