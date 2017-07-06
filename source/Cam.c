@@ -441,6 +441,19 @@ void Cam_B(){
         road_state=5;
       }
     }
+    
+    for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_cross==0;i_valid++)     //寻找有效行
+    {
+      left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
+      right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
+     
+     // else valid_row=ROAD_SIZE-3;
+      if (left3<35 && right3>95){
+        flag_cross=1;
+        road_state=5;
+      }
+    }
+    
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
     if(roundabout_state==0 && flag_cross==0){    //非环岛锁定时，才选择直道或者弯道
       if(valid_row<valid_row_thr){
@@ -835,7 +848,7 @@ void Cam_B(){
         if (cross_cnt > 600 && cross_cnt < 4400){
           PWM(0, 0, &L, &R);
         }
-        else{
+        else if (cross_cnt>4400){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;

@@ -116,9 +116,9 @@ void displayParameters()//menu==1
       {"battery",battery},    
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
-      {"tacho0",tacho0},{"tacho1",tacho1},
+      //{"tacho0",tacho0},{"tacho1",tacho1},
       {"motor_L",motor_L},{"motor_R",motor_R},
-      {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
+      //{"pit0 time",pit0_time},  {"pit1 time",pit1_time}
       //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
