@@ -77,6 +77,8 @@ extern u8 is_stopline;
 extern u8 cnt_zebra;
 extern u8 delay_zebra1, delay_zebra2;//1 for the first, should pass; 2 for the second, should stop
 
+extern u8 obstacle;//0 for none, 1 for left, 2 for right;
+
 extern float motor_L;
 extern float motor_R;
 
@@ -92,6 +94,7 @@ int constrainInt(int lowerBoundary, int upperBoundary, int input);//控制上下限的
 //circle getR(float x1, float y1, float x2, float y2, float x3, float y3);//得到前方曲率圆
 bool is_stop_line(int target_line);//判断是否为终止行/起点行
 double getSlope_(int x1, int y1, int x2, int y2);//得到斜率的倒数
+u8 find_obstacle();
 //——————透视变换
 /*
 extern u8 cam_buffer2[64][128];

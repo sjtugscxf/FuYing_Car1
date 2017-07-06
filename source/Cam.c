@@ -23,11 +23,14 @@ int valid_row=0;//与有效行相关，未有效识别
 int valid_row_thr=30;//有效行阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
-u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
+u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字  2 状态下减速
 u8 is_stopline = 0;
 u8 cnt_zebra = 0;
 u8 delay_zebra1 = 0, delay_zebra2 = 0;
-                  //2 状态下减速
+u8 obstacle = 0;
+int obstacleL[4],obstacleR[4];
+int curv_obstL = 0, curv_obstR = 0;
+
 int margin=30;//弯道判断条件
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
@@ -136,7 +139,7 @@ void getNewBuffer(){
 void Cam_Algorithm(){
   static u8 img_row_used = 0;
   
-  while(img_row_used ==  img_row%IMG_ROWS); // wait for a new row received
+  while(img_row_used == img_row%IMG_ROWS); // wait for a new row received
   
   // -- Handle the row --  
   
@@ -216,6 +219,37 @@ bool is_stop_line(int target_line)//目测并不有效……
   }
   if(cnt_zebra > 5)
     return 1;
+  else return 0;
+}
+
+u8 find_obstacle()
+{
+  for(int i = 0; i < 4; i++)
+  {
+    obstacleL[i] = 0;
+    obstacleR[i] = CAM_WID;
+    for(int j = 0; j < CAM_WID/2+1; j++)
+    {
+      if(cam_buffer[64-(i+1)*15][j] < thr && cam_buffer[64-(i+1)*15][j+1] > thr)
+        obstacleL[i] = j;
+    }
+    for(int j = CAM_WID; j > CAM_WID/2-1; j--)
+    {
+      if(cam_buffer[64-(i+1)*15][j] < thr && cam_buffer[64-(i+1)*15][j-1] > thr)
+        obstacleR[i] = j;
+    }
+  }
+  /*for(int i = 2; i < 5; i++)
+  {
+    curv_obstL += obstacleL[i] - 2 * obstacleL[i-1] + obstacleL[i-2];
+    curv_obstR += obstacleR[i] - 2 * obstacleR[i-1] + obstacleR[i-2];
+  }*/
+  curv_obstL = obstacleL[3] - obstacleL[2] - obstacleL[1] + obstacleL[0];
+  curv_obstR = obstacleR[3] - obstacleR[2] - obstacleR[1] + obstacleR[0];
+  if(curv_obstL < -12 && curv_obstR > -2 && curv_obstR < 4)
+    return 1;
+  else if(curv_obstR > 12 && curv_obstL < 2 && curv_obstL > -4)
+    return 2;
   else return 0;
 }
 /*
@@ -321,6 +355,7 @@ void Cam_B(){
     //===================变量定义====================
   
     static int dir;//舵机输出
+    obstacle = 0;
     
     //================================透视变化
     //getMatrix(0.785398,1.0,1.0,1000);
@@ -394,12 +429,12 @@ void Cam_B(){
  //   k_depth++;
  //   k_depth%=DEPTH;
     //判断停车线-----------------------------------------------------
-    if(is_stopline == 0 && is_stop_line(40) == 1)
+    if(is_stopline == 0 && is_stop_line(45) == 1)
     {
       is_stopline++;
       delay_zebra1 = 20;
     }
-    else if(is_stopline == 1 && delay_zebra1 == 0 && is_stop_line(40) == 1)
+    else if(is_stopline == 1 && delay_zebra1 == 0 && is_stop_line(45) == 1)
     {
       is_stopline++;
       delay_zebra1 = 20;
@@ -465,7 +500,7 @@ void Cam_B(){
     }
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
     if(roundabout_state==0){    //非环岛锁定时，才选择直道或者弯道
-      if(valid_row<valid_row_thr){
+      if(valid_row<valid_row_thr){//-------------------------------------------------------好像有点问题
         road_state=2;                     //弯道
         //cnt_miss++;
       }
@@ -474,6 +509,9 @@ void Cam_B(){
         //cnt_miss++;
       }
     }
+    
+    if(valid_row > 18)
+      obstacle = find_obstacle();
     
     //累积miss数量清零
     /*
@@ -877,6 +915,11 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
+    if(obstacle == 1)
+      dir += 25;
+    else if(obstacle == 2)
+      dir -= 25;
+    
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
     
@@ -914,6 +957,11 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
+      /*if(obstacle > 0)
+      {
+        motor_L *= 0.9;
+        motor_R *= 0.9;
+      }*/
       if(is_stopline == 4)
         PWM(0, 0, &L, &R);
       else PWM(motor_L, motor_R, &L, &R);               //后轮速度

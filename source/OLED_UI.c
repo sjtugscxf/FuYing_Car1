@@ -117,7 +117,8 @@ void displayParameters()//menu==1
       //{"motor_L",motor_L},{"motor_R",motor_R},
       //{"pit0 time",pit0_time},  {"pit1 time",pit1_time},
   {"is_stopline", is_stopline},
-  {"cnt_zebra", cnt_zebra}
+  //{"cnt_zebra", cnt_zebra},
+  {"obstacle", obstacle}
       //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
