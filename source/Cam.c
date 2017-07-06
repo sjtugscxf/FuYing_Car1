@@ -26,6 +26,10 @@ u8 remote_state = 0;//远程控制
 u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
                   //2 状态下减速
 int margin=30;//弯道判断条件
+//十字弯处理========================================
+int flag_cross=0; //十字的判断条件
+int cross_cnt=0; //十字弯计数
+int cross_turn=0; //在十字弯是否靠右停下
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
@@ -416,10 +420,14 @@ void Cam_B(){
       
     //区分前方道路类型===========================环岛优先级最高
     static int mid_ave3;
+    static int left3;
+    static int right3;
     static bool flag_valid_row=0;
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)     //寻找有效行
     {
       mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
+      left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
+      right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
       if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
      // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
       {
@@ -427,9 +435,13 @@ void Cam_B(){
         valid_row=i_valid;
       }
      // else valid_row=ROAD_SIZE-3;
+      if (left3<margin && right3>ROAD_WID-margin){
+        flag_valid_row=1;
+        flag_cross=1;
+      }
     }
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
-    if(roundabout_state==0){    //非环岛锁定时，才选择直道或者弯道
+    if(roundabout_state==0 && flag_cross==0){    //非环岛锁定时，才选择直道或者弯道
       if(valid_row<valid_row_thr){
         road_state=2;                     //弯道
         //cnt_miss++;
@@ -438,6 +450,9 @@ void Cam_B(){
         road_state=1;                     //直道
         //cnt_miss++;
       }
+    }
+    if (flag_cross==1){
+      road_state=5;
     }
     
     //累积miss数量清零
@@ -484,7 +499,7 @@ void Cam_B(){
     */
     
     //区分环岛与十字的延长线法如下：
-    if(roundabout_state==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
+    if(roundabout_state==0 && flag_cross==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
    // if(1){
       int cnt=0,tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
       double suml=0,sumr=0;
@@ -814,6 +829,17 @@ void Cam_B(){
         break;
       case 4:
         break;
+      case 5:
+        cross_cnt++;
+        if (cross_cnt < 4400){
+          PWM(0, 0, &L, &R);
+        }
+        else{
+          flag_cross=0;
+          cross_cnt=0;
+          cross_turn=0;
+        }
+        break;
       default:break;
     }
     
@@ -841,6 +867,13 @@ void Cam_B(){
     
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
+    
+    if (flag_cross==1 && cross_turn==0) {
+      dir = 200;
+      if (cross_cnt > 600){
+        cross_turn=1;
+      }
+    }
     
     if(car_state!=0)
       Servo_Output(dir);
