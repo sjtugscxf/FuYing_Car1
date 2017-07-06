@@ -435,7 +435,7 @@ void Cam_B(){
         valid_row=i_valid;
       }
      // else valid_row=ROAD_SIZE-3;
-      if (left3<margin && right3>ROAD_WID-margin){
+      if (left3<33 && right3>80){
         flag_valid_row=1;
         flag_cross=1;
       }
