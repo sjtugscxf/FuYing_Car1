@@ -915,10 +915,10 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
-    if(obstacle == 1)
+    /*if(obstacle == 1)
       dir += 25;
     else if(obstacle == 2)
-      dir -= 25;
+      dir -= 25;*/
     
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
