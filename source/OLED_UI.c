@@ -99,27 +99,23 @@ void displayParameters()//menu==1
   Putboth outpair[Pages][Rows]={
     {
   {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
-  {"RWNear",road_B[road_B_near].width},{"RWFar",road_B[road_B_far].width},
-   // {"road_C.r",road_C.r},{"road_C.sign",road_C.sign},
+  {"battery",battery},  {"valid_row",valid_row}, 
+   
   {"sum_l",suml},{"sum_r",sumr},
   //{"check near wid",road_B[check_near].right-road_B[check_near].left},
   //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
- // {"valid_row",valid_row}, 
+ // 
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
   {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
-  //{"forced_turn",forced_turn},
- // {"jump_miss",jump_miss},
-//  {"cnt_miss",cnt_miss},        {"f_ch_left",former_choose_left},{"f_ch_right",former_choose_right},
-//  {"is_cross",is_cross},
   //
-      {"battery",battery},    
+        {"RWNear",road_B[road_B_near].width},{"RWFar",road_B[road_B_far].width},
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
       {"tacho0",tacho0},{"tacho1",tacho1},
       {"motor_L",motor_L},{"motor_R",motor_R},
       {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
-      //{"C.r",C.r},{"C.sign",C.sign}
+      // {"road_C.r",road_C.r},{"road_C.sign",road_C.sign},
     },
     { 
       {"mid_ave",mid_ave},
@@ -200,7 +196,7 @@ void displayCamera()//menu==2
   if(!Key1() && flag_down==0)
   {
     page++;
-    page%=3;
+    page%=2;
     flag_down=1;
   }
   switch(page){
@@ -209,9 +205,6 @@ void displayCamera()//menu==2
     break;
   case 1:
     drawRoad();
-    break;
-  case 2:
-    drawJump();
     break;
   default:break;
   }
@@ -350,6 +343,8 @@ void UI_Graph(u8* data){
 void drawRoad()
 {
   int row, col, i, j;
+ // int left_now, right_now;
+ // int cnt=(60-jump[0][1])/CAM_STEP;
   u8 buf[1024];
   u8 *p = buf;
     
@@ -360,8 +355,12 @@ void drawRoad()
         tmp <<= 1;
         if((row-i)>=(10+CAM_STEP) && (row-i)<=60){
           j=(60-(row-i))/CAM_STEP;
+        //  left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
+        //  right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
           if (road_B[j].left==col || road_B[j].mid==col || road_B[j].right==col)//isTarget(cam_buffer[row-i][col]))
             tmp |= 0x01;
+        //  else if(col==left_now || col==right_now)
+        //    tmp |= 0x01;
         }
       }
       *p++ = tmp;

@@ -23,13 +23,13 @@ int road_width_near=70;//¸ÃÖµÍ¨¹ı¹Û²ìcheck_near¶ÔÓ¦ĞĞµÄÕı³£Â·¿íÀ´È·¶¨
 int road_B_far=40;
 int road_width_far=40;//Î´È·¶¨
 //ÓÉÒÔÉÏËÄ¸öÊı¾İ¿ÉÒÔËã³öÖ±µÀÉÏÒ»¶¨¾àÀë´¦¿´µ½µÄÂ·¿í¡£
-int check_round_farthest=10;  //Ë«ÏßÑÓ³¤¼ì²âºÚ¶´´æÔÚÊ±£¬×îÔ¶¼ì²âÎ»ÖÃ£¬cam_bufferÏÂ±ê£¬Ô½Ğ¡Ô½Ô¶£¬²»¿ÉÌ«Ğ¡£¬´ıµ÷²Î¡­¡­¡­¡­¡­¡­
+int check_round_farthest=10;  //Ë«ÏßÑÓ³¤¼ì²âºÚ¶´´æÔÚÊ±£¬×îÔ¶¼ì²âÎ»ÖÃ£¬cam_bufferÏÂ±ê£¬Ô½Ğ¡Ô½Ô¶£¬²»¿ÉÌ«Ğ¡£¬´ó¸Å10Ò²¾ÍÊÇroad_B×îÔ¶¼ì²âµã¾ÍºÃ
 
 //Í¨ÓÃ¡¤ÈüµÀÊ¶±ğ================================
 Road road_B[ROAD_SIZE];//ÓÉ½ü¼°Ô¶´æ·Å
 float mid_ave;//roadÖĞµã¼ÓÈ¨ºóµÄÖµ
 int valid_row=0;//ÓëÓĞĞ§ĞĞÏà¹Ø£¬Î´ÓĞĞ§Ê¶±ğ
-int valid_row_thr=30;//ÓĞĞ§ĞĞãĞÖµ
+int valid_row_thr=25;//ÓĞĞ§ĞĞãĞÖµ
 u8 car_state=0;//ÖÇÄÜ³µ×´Ì¬±êÖ¾ 0£ºÍ£Ö¹  1£º²âÊÔ¶æ»ú  2£ºÕı³£Ñ²Ïß
 u8 remote_state = 0;//Ô¶³Ì¿ØÖÆ
 u8 road_state = 0;//Ç°·½µÀÂ·×´Ì¬ 1¡¢Ö±µÀ   2¡¢ÍäµÀ  3¡¢»·µº  4¡¢ÕÏ°­ 5¡¢Ê®×Ö
@@ -46,7 +46,8 @@ int roundabout_choice=2;//0-Î´Ñ¡Ôñ 1-×ó 2-ÓÒ 3-×óÓÒ½Ô¿É(²»ÓÃ)      //ÄÜ¹»Ñ¡Ôñ×î¶
 //bool is_cross=0; //ÅĞ¶ÏÊÇ·ñÊÇÊ®×Ö
 //bool jump_miss=0; // ¼ÇÂ¼Á¬ĞøÎ´¼ì²âµ½¹ÕµãµÄ´ÎÊı
 //int forced_turn=0;
-int jump_thr=10;//Á½¸öÌø±äµã¼ì²âµÄãĞÖµ
+int cnt_thr=40;//¼ì²â¹Õµã×îÔ¶µÄÎ»ÖÃÏŞÖÆ£¬²»ÄÜÌ«Ô¶£¨¼´²»ÄÜÌ«´ó£©·ñÔòÔÚ»·µº¼ì²âµ½µÄ²»×¼£¬²»ÄÜÌ«Ğ¡·ñÔò¼ì²â²»µ½»òÕß¼ì²âµ½µÄÊ±ºòÒÑ¾­ÍíÁË
+int jump_thr=10;//Á½¸ö¹Õµã¼ì²âµÄãĞÖµ
 int jump[2][2];//´æ¹Õµã×ø±ê 0×ó 1ÓÒ 0-x 1-y
 bool flag_left_jump=0,flag_right_jump=0;
 //Hole hole;
@@ -255,36 +256,38 @@ void Cam_B_Init()//³õÊ¼»¯Cam_B
   
 }
 
-bool is_hole(int row)
+bool is_hole(int row)   //Ò»ĞĞ×ãÒÓ£¬ÎŞĞè¿¼ÂÇÆ½¾ù
 {
-  int left=0,right=0;
+  int left=0,right=0;//¼ÇÂ¼×óÓÒÌø±ä´ÎÊı
     if(cam_buffer[row][CAM_WID/2]<thr)
     {
       //left
       int i=CAM_WID/2-1;
       while(i>0){
-        if(left==0 && cam_buffer[row][i]>thr){//ÊÇ·ñ¿¼ÂÇÈ¡Æ½¾ù·ÀÌø±ä£¿
+        if(left==0 && cam_buffer[row][i]>thr){
           left++;
         }
         else if(left==1 && cam_buffer[row][i]<thr){
           left++;
         }
+        else if(left==2) break;
         i--;
       }
       //right
       i=CAM_WID/2+1;
       while(i<CAM_WID){
-        if(right==0 && cam_buffer[row][i]>thr){//ÊÇ·ñ¿¼ÂÇÈ¡Æ½¾ù·ÀÌø±ä£¿
+        if(right==0 && cam_buffer[row][i]>thr){
           right++;
         }
         else if(right==1 && cam_buffer[row][i]<thr){
           right++;
         }
+        else if(right==2) break;
         i++;
       }
     }
    // bool static hole=0;
-    if(left>=1 && right>=1)
+    if(left>=1 && right>=1)     //×óÓÒÖÁÉÙ¸÷¾­ÀúÒ»´ÎºÚ->°×µÄÌø±ä
       return 1;
     else return 0;
         
@@ -430,74 +433,34 @@ void Cam_B(){
    // road_C=getR(road_B[0].mid,0,road_B[25].mid,25,road_B[49].mid,49);
       
     //Çø·ÖÇ°·½µÀÂ·ÀàĞÍ===========================»·µºÓÅÏÈ¼¶×î¸ß
-    static int mid_ave3;
+    //static int mid_ave3;
     static bool flag_valid_row=0;
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)     //Ñ°ÕÒÓĞĞ§ĞĞ
     {
-      mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
-      if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
-     // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
+      //·½·¨Ò»£¬¸ù¾İmargin ½ÏÎª¿ÉĞĞ
+      //mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
+      //if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
+     //·½·¨¶ş£¬¸ù¾İmidÊÇ·ñÏàµÈ£¬¿ÉÄÜÎóÅĞ£¬Î´³¢ÊÔ
+      // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
+      //·½·¨Èı£¬¸ù¾İwidth
+      if(road_B[i_valid].width<=5)
       {
         flag_valid_row=1;
         valid_row=i_valid;
+        break;
       }
-     // else valid_row=ROAD_SIZE-3;
     }
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
     if(roundabout_state==0){    //·Ç»·µºËø¶¨Ê±£¬²ÅÑ¡ÔñÖ±µÀ»òÕßÍäµÀ
       flag_stop=0;
+      //´Ë´¦»¹¿ÉÌí¼ÓÆäËûÖÃÁã²Ù×÷~~~
       if(valid_row<valid_row_thr){
         road_state=2;                     //ÍäµÀ
-        //cnt_miss++;
       }
       else {
         road_state=1;                     //Ö±µÀ
-        //cnt_miss++;
       }
     }
-    
-    //ÀÛ»ımissÊıÁ¿ÇåÁã
-    /*
-    if (cnt_miss>1000){
-      roundabout_flag=0;
-      former_choose_left=0;
-      former_choose_right=0;
-      cnt_miss=0;
-      is_cross=0;
-    }
-    */
-    //detect the black hole¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª
-    /*
-   int left=0,right=0;
-    if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
-    {
-      //left
-      int i=CAM_WID/2-1;
-      while(i>0){
-        if(left==0 && cam_buffer[CAM_HOLE_ROW][i]>thr){//ÊÇ·ñ¿¼ÂÇÈ¡Æ½¾ù·ÀÌø±ä£¿
-          left++;
-        }
-        else if(left==1 && cam_buffer[CAM_HOLE_ROW][i]<thr){
-          left++;
-        }
-        i--;
-      }
-      //right
-      i=CAM_WID/2+1;
-      while(i<CAM_WID){
-        if(right==0 && cam_buffer[CAM_HOLE_ROW][i]>thr){//ÊÇ·ñ¿¼ÂÇÈ¡Æ½¾ù·ÀÌø±ä£¿
-          right++;
-        }
-        else if(right==1 && cam_buffer[CAM_HOLE_ROW][i]<thr){
-          right++;
-        }
-        i++;
-      }
-    }
-    bool static hole=0;
-    if(left>=1 && right>=1)
-      hole=1;//Ç°·½ÓĞÀàËÆºÚ¶´³öÃ»
-    */
     
     //Çø·Ö»·µºÓëÊ®×ÖµÄÑÓ³¤Ïß·¨ÈçÏÂ£º
     if(roundabout_state==0){     //ÈôÃ»ÓĞ¼ì²âµ½»·µº£¬Ôò½øĞĞ¹Õµã£¨jump£©¼ì²â£¬ÈçÏÂ£º//Ì«¾«Ï¸µÄ¼ÆËã²»ÊÊºÏ£¬ËùÒÔ¸Ä³ÉÒ»¸ö¼òµ¥µÄ
@@ -506,13 +469,13 @@ void Cam_B(){
       //suml=sumr=0;
       //int thr_tmp=0;//Î´ÓÃ
       flag_left_jump=0,flag_right_jump=0;
-      for(cnt=0;cnt<ROAD_SIZE-6;cnt++){
+      for(cnt=0;cnt<cnt_thr;cnt++){
         if(flag_left_jump==0){
        /*   tmpl2=tmpl1;
           tmpl1=road_B[cnt+1].left-road_B[cnt].left;
-          if((tmpl2-tmpl1)>jump_thr){// && cnt>(ROAD_SIZE/5)){      //¸½¼ÓÌõ¼ş£ºÖ±µÀ³¤¶È²»ÄÜÌ«¶Ì£¬²»È»Å¼È»ĞÔ½Ï´ó
+          if((tmpl2-tmpl1)>jump_thr){// && cnt>(ROAD_SIZE/5)){      //¸½¼ÓÌõ¼ş£ºÖ±µÀ³¤¶È²»ÄÜÌ«¶Ì£¬²»È»Å¼È»ĞÔ½Ï´ó*/
 //          if(tmpl1<0&&tmpl2>0) {      //±»ÌÔÌ­µÄºÜÈõµÄÌõ¼ş
-          */
+          
           if((road_B[cnt].left-road_B[cnt+5].left)>jump_thr){
             flag_left_jump=1;
             suml=road_B[cnt].left-road_B[0].left;
@@ -524,9 +487,9 @@ void Cam_B(){
         if(flag_right_jump==0){
         /*  tmpr2=tmpr1;
           tmpr1=road_B[cnt+1].right-road_B[cnt].right;
-          if((tmpr1-tmpr2)>jump_thr){ //&& cnt>(ROAD_SIZE/5)){      //¸½¼ÓÌõ¼ş£ºÖ±µÀ³¤¶È²»ÄÜÌ«¶Ì£¬²»È»Å¼È»ĞÔ½Ï´ó
+          if((tmpr1-tmpr2)>jump_thr){ //&& cnt>(ROAD_SIZE/5)){      //¸½¼ÓÌõ¼ş£ºÖ±µÀ³¤¶È²»ÄÜÌ«¶Ì£¬²»È»Å¼È»ĞÔ½Ï´ó*/
 //          if(tmpr1>0&&tmpr2<0) {
-          */
+          
           if((road_B[cnt+5].right-road_B[cnt].right)>jump_thr){
             flag_right_jump=1;
             sumr=road_B[cnt].right-road_B[0].right;
@@ -537,12 +500,10 @@ void Cam_B(){
        if(flag_left_jump==1&&flag_right_jump==1)//¼ì²âµ½Á½¸ö¹Õµã       
          break;
       }
-      if(flag_left_jump==1&&flag_right_jump==1){//Èô¼ì²âµ½Á½¸ö¹Õµã£¬ÔòÅĞ¶ÏÊÇ»·µº»¹ÊÇÊ®×Ö£¬ÈçÏÂ£º
+      if(flag_left_jump==1&&flag_right_jump==1){//Èô¼ì²âµ½Á½¸ö¹Õµã£¬ÔòÅĞ¶ÏÊÇ»·µº»¹ÊÇÊ®×Ö£¬ÈçÏÂ£º(Í¬Ê±ÒªÇóÁ½¸ö¹Õµã²»ÄÜÌ«Ô¶£¬·ñÔòÃ»ÓÃ)
         //suml  cnt*CAM_STEP
-        int cnt_black_row=0;//±êÖ¾
+        int cnt_black_row=0;//¼ÇÂ¼ºÚĞĞ¸öÊı
         int left_now,right_now;//´æµ±Ç°ĞĞÉ¨Ãè±ß½ç
-        //ÒÔÏÂÁ½¸öÏŞÖÆÔÚÕı³£ĞĞÊ»µÄÊ±ºò¿É¼õÈõ¶¶¶¯
-        //µ«ÊÇÈôÓĞÇãĞ±£¬²»ÀûÓÚÇø·ÖÊ®×ÖÓë»·µº!!!!!!!!!!
         for(int j=cnt;(60-CAM_STEP*j)>check_round_farthest;j++){//×îÔ¶¼ì²âµãcheck_farthestÒÑµ÷²Î¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­
           left_now=jump[0][0]+suml*(j-cnt)/(cnt*CAM_STEP);
           right_now=jump[1][0]+sumr*(j-cnt)/(cnt*CAM_STEP);
@@ -551,42 +512,20 @@ void Cam_B(){
             if (cam_buffer[60-CAM_STEP*j][i] < thr)
               cnt_black++;
           }
-          if(cnt_black>(right_now-left_now)*0.8) cnt_black_row++;
-          if(cnt_black_row>=3){
+          if(cnt_black>(right_now-left_now)*0.6) cnt_black_row++;//Èõ»¯Ìõ¼şÊÔÒ»ÏÂ
+          if(cnt_black_row>=2){
             if(is_hole(CAM_HOLE_ROW)){
               road_state=3;                       //Íê³É»·µºÅĞ¶Ï
               roundabout_state=1;
-              //cnt_miss=0;
             }
             break;
           }
-         // else is_cross=1;
         }
       }
-      //³ö»·µºÊ±£¬ÈôÖ»ÓĞÒ»¸ö¹Õµã£¬³ö£¬
-   /*   else{
-        if (flag_left_jump==1 && is_cross==0){
-          former_choose_left==1;
-          jump_miss=0;
-        }
-        if (flag_right_jump==1 && is_cross==0){
-          former_choose_right=1;
-          jump_miss=0;
-        }
-        
-        //Èç¹ûÎ´¼ì²âµ½¹Õµã£¬¼ÆÊı
-        if (flag_left_jump==0 && flag_right_jump==0){
-          jump_miss++;
-        }
-      }
-      */
     }
-    //
+
     
-    
-    
-    
-    //detect the obstacle¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª
+    //detect the obstacle¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª//Î´³É¹¦
   /*  if((road_B[ROAD_OBST_ROW].right-road_B[ROAD_OBST_ROW].left)<OBSTACLE_THR)
     {
       int i=road_B[ROAD_OBST_ROW].mid;
