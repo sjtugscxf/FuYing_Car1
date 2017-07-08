@@ -119,7 +119,7 @@ void displayParameters()//menu==1
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
       //{"tacho0",tacho0},{"tacho1",tacho1},
-      {"motor_L",motor_L},{"motor_R",motor_R},
+    //  {"motor_L",motor_L},{"motor_R",motor_R},
       //{"pit0 time",pit0_time},  {"pit1 time",pit1_time}
       //{"C.r",C.r},{"C.sign",C.sign}
     },
@@ -228,7 +228,7 @@ void displayDebug()//menu==3
     if(!Key2() && flag_down==0) {debug_dir.kd+=0.1;flag_down=1;}
     if(!Key3() && flag_down==0) {debug_dir.kd-=0.1;flag_down=1;}
     break;
-  case 2:
+ /* case 2:
     Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,MAX_SPEED);
     if(!Key2() && flag_down==0) {MAX_SPEED+=1;flag_down=1;}
     if(!Key3() && flag_down==0 && max_speed>min_speed+1) {MAX_SPEED-=1;flag_down=1;}
@@ -247,6 +247,27 @@ void displayDebug()//menu==3
     Oled_Putstr(6,0,"Debugging check_far"); Oled_Putnum(7,11,check_farthest);
     if(!Key2() && flag_down==0) {check_farthest+=1;flag_down=1;}
     if(!Key3() && flag_down==0) {check_farthest-=1;flag_down=1;} 
+    break;
+    */
+  case 2:
+    Oled_Putstr(6,0,"Debugging left_time"); Oled_Putnum(7,11,left_time);
+    if(!Key2() && flag_down==0) {left_time+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {left_time-=10;flag_down=1;}
+    break;
+  case 3:
+    Oled_Putstr(6,0,"Debugging right_time"); Oled_Putnum(7,11,right_time);
+    if(!Key2() && flag_down==0) {right_time+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {right_time-=10;flag_down=1;}
+    break;
+  case 4:
+    Oled_Putstr(6,0,"Debugging left_time2"); Oled_Putnum(7,11,left_time2);
+    if(!Key2() && flag_down==0) {left_time2+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {left_time2-=10;flag_down=1;}
+    break;
+  case 5:
+    Oled_Putstr(6,0,"Debugging right_time2"); Oled_Putnum(7,11,right_time2);
+    if(!Key2() && flag_down==0) {right_time2+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {right_time2-=10;flag_down=1;}
     break;
 /*  case 4:
     Oled_Putstr(6,0,"Debugging c1"); Oled_Putnum(7,11,c1);
@@ -268,10 +289,10 @@ void displayDebug()//menu==3
   
   Oled_Putstr(0,0,"dir.kp*10"); Oled_Putnum(0,11,(Dir_Kp+debug_dir.kp)*10);
   Oled_Putstr(1,0,"dir.kd*10"); Oled_Putnum(1,11,(Dir_Kd+debug_dir.kd)*10);
-  Oled_Putstr(2,0,"MaxSpeed"); Oled_Putnum(2,11,max_speed);
-  Oled_Putstr(3,0,"MinSpeed"); Oled_Putnum(3,11,min_speed);
-  Oled_Putstr(4,0,"jump_thr"); Oled_Putnum(4,11,jump_thr);  
-  Oled_Putstr(5,0,"check_far"); Oled_Putnum(5,11,check_farthest); 
+  Oled_Putstr(2,0,"left_time"); Oled_Putnum(2,11,left_time);
+  Oled_Putstr(3,0,"right_time"); Oled_Putnum(3,11,right_time);
+  Oled_Putstr(4,0,"left_time2"); Oled_Putnum(4,11,left_time2);  
+  Oled_Putstr(5,0,"right_time2"); Oled_Putnum(5,11,right_time2); 
 }
 
 void drawCam(bool(*isTarget)(u8 x)) {

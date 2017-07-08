@@ -118,7 +118,11 @@ extern int forced_turn;
 extern int check_farthest;
 extern int check_near;
 extern int road_width_thr;
-//==============
+//==============Ê®×Ö
+extern int right_time;//for debug
+extern int left_time;
+extern int right_time2;
+extern int left_time2;
 //test
 extern double theta;
 extern double x,y;

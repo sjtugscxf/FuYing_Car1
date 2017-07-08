@@ -35,6 +35,10 @@ int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
 int flag_stop=0;
 int cross_times=0; // 判断成十字的次数
+int right_time=60;//for debug   //40
+int left_time=1700;
+int right_time2=200;
+int left_time2=1000;
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
@@ -456,6 +460,7 @@ void Cam_B(){
       
       width3 = right3 - left3;
     }
+    }
     
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
     if(roundabout_state==0 && flag_cross==0){    //非环岛锁定时，才选择直道或者弯道
@@ -468,12 +473,12 @@ void Cam_B(){
         //cnt_miss++;
       }
     }
-    if (flag_cross==1){
+    
+    if (flag_cross==1 && roundabout_state==0){
       road_state=5;
       cross_turn=2;
       if (cross_cnt==0){
         cross_times++;}
-    }
     }
     
     //累积miss数量清零
@@ -888,31 +893,32 @@ void Cam_B(){
       case 5:
         cross_cnt++;
         if ((cross_times%2)==1){
-        if (cross_cnt >= 60 && cross_cnt < 4100){
+        if (cross_cnt >= right_time && cross_cnt < 4100){
           flag_stop=1;
           cross_turn=3;
         }
-        else if (cross_cnt >= 4100 && cross_cnt < 5000){
+        else if (cross_cnt >= 4100 && cross_cnt < 4100+left_time){
           flag_stop=0;
           cross_turn=1;
         }
-        else if (cross_cnt>=5000){
+        else if (cross_cnt>=4100+left_time){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
           flag_stop=0;
         }
         }
+        
         else if ((cross_times%2)==0){
-        if (cross_cnt >= 200 && cross_cnt < 4200){
+        if (cross_cnt >= right_time2 && cross_cnt < 4200){
           flag_stop=1;
           cross_turn=3;
         }
-        else if (cross_cnt >= 4200 && cross_cnt < 5200){
+        else if (cross_cnt >= 4200 && cross_cnt < 4200+left_time2){
           flag_stop=0;
           cross_turn=1;
         }
-        else if (cross_cnt>=5200){
+        else if (cross_cnt>=4200+left_time2){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
@@ -950,13 +956,13 @@ void Cam_B(){
     
     if (flag_cross==1 && cross_turn!=0) {
       if (cross_turn==2){
-        dir += 70;
+        dir= 100;
       }
       else if (cross_turn == 3){
         dir=0;
       }
       else if (cross_turn == 1){
-        dir = -200;
+        dir = 40
       }
     }
     
@@ -972,6 +978,11 @@ void Cam_B(){
     min_speed=MIN_SPEED;
     float range=constrain(0,50,max_speed-min_speed);//速度范围大小 
     if(flag_stop==1) PWM(0,0,&L,&R);
+    
+    else if (cross_turn==1){
+      PWMne(10, 10, *L, *R)
+    }
+    
     else{
     if(car_state==2 ){
       //分段线性控速
