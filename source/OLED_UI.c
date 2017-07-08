@@ -196,10 +196,24 @@ void displayParameters()//menu==1
 
 void displayCamera()//menu==2
 {
-//  if(!Key1())
+  static int page=0;
+  if(Key2() && Key3() && Key1())  flag_down=0;//检测是否按下key2 key3
+  //下一页
+  if(!Key1() && flag_down==0)
+  {
+    page++;
+    page%=2;
+    flag_down=1;
+  }
+  switch(page){
+  case 0:
     drawCam(isWhite);
- // else
-  //  drawCam2(isWhite);
+    break;
+  case 1:
+    drawRoad();
+    break;
+  default:break;
+  }
 }
 
 
@@ -333,7 +347,34 @@ void UI_Graph(u8* data){
 }
 
 
-
+void drawRoad()
+{
+  int row, col, i, j;
+ // int left_now, right_now;
+ // int cnt=(60-jump[0][1])/CAM_STEP;
+  u8 buf[1024];
+  u8 *p = buf;
+    
+  for (row = IMG_ROWS-1; row >= 0; row -= 8) {
+    for (col = IMG_COLS-1; col >= 0 ; col--) {
+      u8 tmp = 0;
+      for (i = 0; i < 8; i++) {
+        tmp <<= 1;
+        if((row-i)>=(10+CAM_STEP) && (row-i)<=60){
+          j=(60-(row-i))/CAM_STEP;
+        //  left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
+        //  right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
+          if (road_B[j].left==col || road_B[j].mid==col || road_B[j].right==col)//isTarget(cam_buffer[row-i][col]))
+            tmp |= 0x01;
+        //  else if(col==left_now || col==right_now)
+        //    tmp |= 0x01;
+        }
+      }
+      *p++ = tmp;
+    }
+  }
+  Oled_DrawBMP(0, 0, 128, 64, buf);
+}
 
 
 
