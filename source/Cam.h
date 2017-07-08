@@ -78,7 +78,7 @@ extern int left3;
 extern int right3;
 extern int width3;
 extern int flag_cross;
-extern int cross_times=0;
+extern int cross_times;
 
 extern float motor_L;
 extern float motor_R;

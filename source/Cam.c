@@ -265,7 +265,7 @@ bool is_hole(int row)
       //left
       int i=CAM_WID/2-1;
       while(i>0){
-        if(left==0 && cam_buffer[row][i]>0000000thr){//是否考虑取平均防跳变？
+        if(left==0 && cam_buffer[row][i]>thr){//是否考虑取平均防跳变？
           left++;
         }
         else if(left==1 && cam_buffer[row][i]<thr){
@@ -471,7 +471,8 @@ void Cam_B(){
     if (flag_cross==1){
       road_state=5;
       cross_turn=2;
-      cross_times++;
+      if (cross_cnt==0){
+        cross_times++;}
     }
     }
     
