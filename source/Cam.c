@@ -230,12 +230,12 @@ u8 find_obstacle()
     obstacleR[i] = CAM_WID;
     for(int j = 0; j < CAM_WID/2+1; j++)
     {
-      if(cam_buffer[64-(i+1)*15][j] < thr && cam_buffer[64-(i+1)*15][j+1] > thr)
+      if(cam_buffer[64-(i+2)*8][j] < thr && cam_buffer[64-(i+2)*8][j+1] > thr)
         obstacleL[i] = j;
     }
-    for(int j = CAM_WID; j > CAM_WID/2-1; j--)
+    for(int j = CAM_WID; j > CAM_WID/2-1; j--)  
     {
-      if(cam_buffer[64-(i+1)*15][j] < thr && cam_buffer[64-(i+1)*15][j-1] > thr)
+      if(cam_buffer[64-(i+2)*8][j] < thr && cam_buffer[64-(i+2)*8][j-1] > thr)
         obstacleR[i] = j;
     }
   }
@@ -246,9 +246,9 @@ u8 find_obstacle()
   }*/
   curv_obstL = obstacleL[3] - obstacleL[2] - obstacleL[1] + obstacleL[0];
   curv_obstR = obstacleR[3] - obstacleR[2] - obstacleR[1] + obstacleR[0];
-  if(curv_obstL < -12 && curv_obstR > -2 && curv_obstR < 4)
+  if(curv_obstL < -15 && curv_obstR > -3 || curv_obstR < 4)
     return 1;
-  else if(curv_obstR > 12 && curv_obstL < 2 && curv_obstL > -4)
+  else if(curv_obstR > 15 && curv_obstL < 3 || curv_obstL > -4)
     return 2;
   else return 0;
 }
@@ -915,10 +915,10 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
-    if(obstacle == 1)
+    /*if(obstacle == 1)
       dir += 25;
     else if(obstacle == 2)
-      dir -= 25;
+      dir -= 25;*/
     
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;

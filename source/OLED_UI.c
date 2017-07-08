@@ -118,10 +118,24 @@ void displayParameters()//menu==1
       //{"pit0 time",pit0_time},  {"pit1 time",pit1_time},
   {"is_stopline", is_stopline},
   //{"cnt_zebra", cnt_zebra},
-  {"obstacle", obstacle}
+  {"obstacle", obstacle},
+  {"curv_L", curv_obstL},
+  {"curv_R", curv_obstR}
       //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
+      {"obstL[0]",obstacleL[0]},
+      {"obstL[1]",obstacleL[1]},
+      {"obstL[2]",obstacleL[2]},
+      {"obstL[3]",obstacleL[3]},
+      {" ",1111},
+      {"obstR[0]",obstacleR[0]},
+      {"obstR[1]",obstacleR[1]},
+      {"obstR[2]",obstacleR[2]},
+      {"obstR[3]",obstacleR[3]},
+      {" ",1111},
+      
+      
       {"mid_ave",mid_ave},
    /* {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[1].mid},         {"mid[2]",road_B[2].mid}, 
       {"mid[3]",road_B[3].mid},     {"mid[4]",road_B[4].mid},         {"mid[5]",road_B[5].mid}, 
