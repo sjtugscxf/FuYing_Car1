@@ -18,4 +18,5 @@ void drawCam(bool(*isTarget)(u8 x));//二值化
 void drawCam2(bool(*isTarget)(u8 x));//透视变换
 bool isWhite(u8 x);
 void drawJump();//画jump[][]以及其延长线
+void drawRoad();
 #endif

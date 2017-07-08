@@ -76,11 +76,12 @@ extern u8 road_state;//前方道路状态
 extern u8 is_stopline;
 extern u8 cnt_zebra;
 extern u8 delay_zebra1, delay_zebra2;//1 for the first, should pass; 2 for the second, should stop
-extern int obstacleL[4],obstacleR[4];
+extern int obstacleL[6],obstacleR[6];
 extern int curv_obstL, curv_obstR;
 
 extern u8 obstacle;//0 for none, 1 for left, 2 for right;
 extern u8 last_obstacle;
+extern u8 delay_obst;
 
 extern float motor_L;
 extern float motor_R;

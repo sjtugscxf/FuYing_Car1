@@ -29,8 +29,9 @@ u8 cnt_zebra = 0;
 u8 delay_zebra1 = 0, delay_zebra2 = 0;
 u8 obstacle = 0;
 u8 last_obstacle = 0;
-int obstacleL[4],obstacleR[4];
+int obstacleL[6],obstacleR[6];
 int curv_obstL = 0, curv_obstR = 0;
+u8 delay_obst = 0;
 
 int margin=30;//弯道判断条件
 //环岛处理========================================
@@ -225,18 +226,20 @@ bool is_stop_line(int target_line)//目测并不有效……
 
 u8 find_obstacle()
 {
-  for(int i = 0; i < 4; i++)
+  u8 tmp_flag = 0;
+  int tmp_curvL = 0, tmp_curvR = 0;
+  for(int i = 0; i < 6; i++)
   {
     obstacleL[i] = 0;
     obstacleR[i] = CAM_WID;
     for(int j = 0; j < CAM_WID/2+1; j++)
     {
-      if(cam_buffer[64-(i+2)*8][j] < thr && cam_buffer[64-(i+2)*8][j+1] > thr)
+      if(cam_buffer[60-i*8][j] < thr && cam_buffer[60-i*8][j+1] > thr)
         obstacleL[i] = j;
     }
     for(int j = CAM_WID; j > CAM_WID/2-1; j--)  
     {
-      if(cam_buffer[64-(i+2)*8][j] < thr && cam_buffer[64-(i+2)*8][j-1] > thr)
+      if(cam_buffer[60-i*8][j] < thr && cam_buffer[60-i*8][j-1] > thr)
         obstacleR[i] = j;
     }
   }
@@ -245,26 +248,37 @@ u8 find_obstacle()
     curv_obstL += obstacleL[i] - 2 * obstacleL[i-1] + obstacleL[i-2];
     curv_obstR += obstacleR[i] - 2 * obstacleR[i-1] + obstacleR[i-2];
   }*/
-  curv_obstL = obstacleL[3] - obstacleL[2] - obstacleL[1] + obstacleL[0];
-  curv_obstR = obstacleR[3] - obstacleR[2] - obstacleR[1] + obstacleR[0];
-  if((curv_obstL < -15 || curv_obstL > 10) && (curv_obstR > -3 || curv_obstR < 4))
+  
+  for(int i = 2; i >= 0; i--)
   {
-    if(last_obstacle != 1)
-      last_obstacle = 1;
-    return 1;
+    curv_obstL = obstacleL[i+3] - obstacleL[i+2] - obstacleL[i+1] + obstacleL[i];
+    curv_obstR = obstacleR[i+3] - obstacleR[i+2] - obstacleR[i+1] + obstacleR[i];
+    tmp_curvL = obstacleL[i+2]-2*obstacleL[i+1]+obstacleL[i];
+    tmp_curvR = obstacleR[i+2]-2*obstacleR[i+1]+obstacleR[i];
+    if(   ((curv_obstL < -15 || curv_obstL > 12) 
+        || (curv_obstL < 4 && curv_obstL > -4 && (tmp_curvL > 10 || tmp_curvL < -10))) 
+        && (curv_obstR > -3 && curv_obstR < 3)
+        /*&& (tmp_curvR > -3 && tmp_curvR < 3)*/)
+    {
+      tmp_flag = 1;
+      delay_obst = 1;
+    }
+    else if(  ((curv_obstR > 15 || curv_obstR < -12) 
+             || (curv_obstR < 5 && curv_obstR > -5 && (tmp_curvR > 10 || tmp_curvR < -10))) 
+             && (curv_obstL < 3 && curv_obstL > -3)
+             /*&& (tmp_curvL > -3 && tmp_curvL < 3)*/)
+    {
+      tmp_flag = 2;
+      delay_obst = 2;
+    }
+    else if(tmp_flag == 0)
+    {
+      tmp_flag = 0;
+    }
   }
-  else if((curv_obstR > 15 || curv_obstL < -10) && (curv_obstL < 3 || curv_obstL > -4))
-  {
-    if(last_obstacle != 2)
-      last_obstacle = 2;
-    return 2;
-  }
-  else
-  {
-    if(last_obstacle != 0)
-      last_obstacle = 0;
-    return 0;
-  }
+  if(last_obstacle != tmp_flag)
+    last_obstacle = tmp_flag;
+  return tmp_flag;
 }
 /*
 double getSlope_(int x1, int y1, int x2, int y2)
@@ -524,7 +538,7 @@ void Cam_B(){
       }
     }
     
-    if(valid_row > 18)
+    if(valid_row > 35)
       obstacle = find_obstacle();
     
     //累积miss数量清零
@@ -929,10 +943,10 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
-    if(obstacle == 1)
-      dir += 50;
-    else if(obstacle == 2)
-      dir -= 50;
+    if(obstacle == 1 || delay_obst == 1)
+      dir += 90;
+    else if(obstacle == 2 || delay_obst == 2)
+      dir -= 70;
     
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
@@ -971,7 +985,7 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      if(obstacle > 0)
+      if(obstacle > 0 || delay_obst > 0)
       {
         motor_L *= 0.7;
         motor_R *= 0.7;

@@ -122,6 +122,8 @@ void PIT1_IRQHandler(){
     delay_zebra1--;
   if(delay_zebra2 > 0)
     delay_zebra2--;
+  if(delay_obst > 0)
+    delay_obst = 0;
   
   //------------ Other -------------
   
