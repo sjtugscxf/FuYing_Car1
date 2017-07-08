@@ -103,6 +103,7 @@ void displayParameters()//menu==1
   //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
   {"left3", left3},
   {"right3", right3},
+  {"r-l-w", right3-left3-width3}
   {"flag_cross", flag_cross},
   {"valid_row",valid_row}, 
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
