@@ -950,7 +950,7 @@ void Cam_B(){
     
     if (flag_cross==1 && cross_turn!=0) {
       if (cross_turn==2){
-        dir = 100;
+        dir += 70;
       }
       else if (cross_turn == 3){
         dir=0;
