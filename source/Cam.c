@@ -38,7 +38,7 @@ int flag_stop=0;
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
                         
-int check_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定，待调参………………
+int road_B_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定，待调参………………
                   //对应路宽 5 -> 直道50+ or 弯道70+ or 入环岛或十字110+ or 出环岛可能80~100+ 
 int road_width_thr=90;//该值通过观察check_near对应行的正常路宽来确定
 int time_cnt=0;
@@ -264,7 +264,7 @@ bool is_hole(int row)
       //left
       int i=CAM_WID/2-1;
       while(i>0){
-        if(left==0 && cam_buffer[row][i]>thr){//是否考虑取平均防跳变？
+        if(left==0 && cam_buffer[row][i]>0000000thr){//是否考虑取平均防跳变？
           left++;
         }
         else if(left==1 && cam_buffer[row][i]<thr){
@@ -291,7 +291,7 @@ bool is_hole(int row)
         
 }
 
-bool isWider(int row)
+bool isWider(int row, int road_width_thr)
 {
   int wid=0;
   for(int i=-1;i<2;i++)
@@ -443,9 +443,13 @@ void Cam_B(){
       right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
      
      // else valid_row=ROAD_SIZE-3;
-      if ((right3-left3) > 120 && (right3-left3-width3) > 20){
-        flag_cross=1;
-        road_state=5;
+      if ((right3-left3) > 120){
+        if ((right3-left3-width3)>50){
+           flag_cross=1;
+           road_state=5;
+           cross_turn=2;
+        }
+        break;
       }
       
       width3 = right3 - left3;
@@ -464,6 +468,7 @@ void Cam_B(){
     }
     if (flag_cross==1){
       road_state=5;
+      cross_turn=2;
     }
     
     //累积miss数量清零
@@ -879,10 +884,11 @@ void Cam_B(){
         cross_cnt++;
         if (cross_cnt >= 100 && cross_cnt < 4100){
           flag_stop=1;
+          cross_turn=3;
         }
         else if (cross_cnt >= 4100 && cross_cnt < 5200){
           flag_stop=0;
-          cross_turn=2;
+          cross_turn=1;
         }
         else if (cross_cnt>=5200){
           flag_cross=0;
@@ -919,14 +925,14 @@ void Cam_B(){
     //if(forced_turn==1) dir=-200;
     //else if(forced_turn==2) dir=200;
     
-    if (flag_cross==1 && cross_turn!=1) {
-      if (cross_turn==0){
-        dir = 200;
-        if (cross_cnt >= 100){
-          cross_turn=1;
-        }
+    if (flag_cross==1 && cross_turn!=0) {
+      if (cross_turn==2){
+        dir = 100;
       }
-      else if (cross_turn == 2){
+      else if (cross_turn == 3){
+        dir=0;
+      }
+      else if (cross_turn == 1){
         dir = -200;
       }
     }
