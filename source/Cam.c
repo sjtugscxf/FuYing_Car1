@@ -25,6 +25,7 @@ int road_width_far=40;//未确定
 //由以上四个数据可以算出直道上一定距离处看到的路宽。
 int check_round_farthest=10;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，大概10也就是road_B最远检测点就好
 
+
 //通用·赛道识别================================
 Road road_B[ROAD_SIZE];//由近及远存放
 float mid_ave;//road中点加权后的值
@@ -36,8 +37,9 @@ u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
                   //2 状态下减速
 int margin=30;//弯道判断条件
 //环岛处理========================================
-int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int time_cnt=0;
+int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //弃用
+int road_hole_row=40;//road_B下标
 //以下出岛时需要全部置零
 int roundabout_state=0;//0-非环岛 1-预入环岛（直道） 2-入环岛（转向） 3-在环岛 4-出环岛（转向）      注：非零的时候会锁定环岛状态
 int roundabout_choice=2;//0-未选择 1-左 2-右 3-左右皆可(不用)      //能够选择最短路径时要初始化为0
@@ -465,11 +467,12 @@ void Cam_B(){
     //区分环岛与十字的延长线法如下：
     if(roundabout_state==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：//太精细的计算不适合，所以改成一个简单的
    // if(1){
-      int cnt=0,tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
+      int cnt=0;
+      int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
       //suml=sumr=0;
       //int thr_tmp=0;//未用
       flag_left_jump=0,flag_right_jump=0;
-      for(cnt=0;cnt<cnt_thr;cnt++){
+      for(cnt=0;cnt<cnt_thr;cnt++){     //在road_B[0]~[39]之间检查jump
         if(flag_left_jump==0){
        /*   tmpl2=tmpl1;
           tmpl1=road_B[cnt+1].left-road_B[cnt].left;
@@ -514,7 +517,8 @@ void Cam_B(){
           }
           if(cnt_black>(right_now-left_now)*0.6) cnt_black_row++;//弱化条件试一下
           if(cnt_black_row>=2){
-            if(is_hole(CAM_HOLE_ROW)){
+            road_hole_row=j;
+            if(is_hole(road_hole_row)){
               road_state=3;                       //完成环岛判断
               roundabout_state=1;
             }
@@ -623,11 +627,11 @@ void Cam_B(){
               */
             }
             //road_width_thr=100;
-            if(!isWider(road_B_near,100) && time_cnt>200){ //如果路宽恢复正常，认为完成入岛//我猜不如下面的时间控制方式有效
+            if(!isWider(road_B_near,100) && time_cnt>1000){ //如果路宽恢复正常，认为完成入岛//我猜不如下面的时间控制方式有效
               roundabout_state=3;
               time_cnt=0;
             }
-            else if(time_cnt>1000){
+            else if(time_cnt>3000){
               roundabout_state=3;
               time_cnt=0;
             }
@@ -636,10 +640,10 @@ void Cam_B(){
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
            //停车：
-          if(time_cnt>=300&&time_cnt<2000)
+         /* if(time_cnt>=300&&time_cnt<2000)
             flag_stop=1;
           else flag_stop=0;
-          
+          */
          
           
           //用来检测什么时候出现分叉//双重条件，增大识别的可能，非最终版
@@ -667,7 +671,7 @@ void Cam_B(){
           break;
         case 4://出环岛，又一次分道
            //停车：
-          if(time_cnt>=0&&time_cnt<2000)
+          if(time_cnt>=0&&time_cnt<1500)
             flag_stop=1;
           else flag_stop=0;
           
@@ -682,7 +686,7 @@ void Cam_B(){
             time_cnt=0;
             flag_stop=0;
           }
-          else if(time_cnt>5000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
+          else if(time_cnt>10000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
           break;
         default:break;
         }

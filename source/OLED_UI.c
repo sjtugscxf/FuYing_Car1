@@ -100,7 +100,7 @@ void displayParameters()//menu==1
     {
   {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
   {"battery",battery},  {"valid_row",valid_row}, 
-   
+  {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
   {"sum_l",suml},{"sum_r",sumr},
   //{"check near wid",road_B[check_near].right-road_B[check_near].left},
   //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},

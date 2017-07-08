@@ -117,6 +117,7 @@ extern int road_B_far;
 extern int road_width_near;
 extern int road_width_far;
 extern double suml,sumr;
+extern int road_hole_row;
 //==============
 //test
 //extern double theta;
