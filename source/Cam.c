@@ -645,20 +645,22 @@ void Cam_B(){
         {
         case 0://非环岛，用于置零
           roundabout_state=0;//0-非环岛 1-入环岛（有分支） 2-在环岛 3-出环岛（有分支）
-          roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可(不用)
+        //  roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可(不用)暂时注释掉，能够选择最短路径时加回来
           //cnt_miss=0; //累计未判断成环岛的次数
-          former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
+          //former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
           //is_cross=0; //判断是否是十字
           //jump_miss=0; // 记录连续未检测到拐点的次数
-          forced_turn=0;
+          //forced_turn=0;
+          flag_stop=0;
           break;
         case 1:
           if(roundabout_choice==0){
             //暂时用右转代替最短路径（注意：小环岛最短路径影响不大，大环岛能否看到出岛位置则是个问题）
-            roundabout_choice=SW1()+1;
+            //roundabout_choice=SW1()+1;
+           // roundabout_choice=1;
           }
-          road_width_thr=90;
-          if(isWider(check_near)){//如果路过于宽，认为出现分叉，开始转弯
+          //road_width_thr=90;
+          if(isWider(road_B_near,110)){//如果路过于宽，认为出现分叉，开始转弯
             roundabout_state=2;
             time_cnt=0;
           }
@@ -675,11 +677,19 @@ void Cam_B(){
                                         //（尝试如下，在road_B[check_near]处检测，若right-left大于road_width_max（可调参），则利用roundabout_choice将mid_ave左移或右移）
           //  }
             for(int i=1;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
-              if(roundabout_choice==1) road_B[i].mid *= 0.18;
-              else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.75);
+              if(roundabout_choice==1) road_B[i].mid = constrain(0,CAM_WID/2-30,road_B[i].mid-40);
+              else if(roundabout_choice==2) road_B[i].mid = constrain(CAM_WID/2+30,CAM_WID,road_B[i].mid+40);
+              /*
+              if(roundabout_choice==1) road_B[i].mid *= 0.25;
+              else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.60);
+              */
             }
-            road_width_thr=100;
-            if(!isWider(check_near) && time_cnt>500){ //如果路宽恢复正常，认为完成入岛//^……………………………………………………此处不能脱离状态！！！！！！！！！！！！
+            //road_width_thr=100;
+            if(!isWider(road_B_near,100) && time_cnt>1000){ //如果路宽恢复正常，认为完成入岛//我猜不如下面的时间控制方式有效
+              roundabout_state=3;
+              time_cnt=0;
+            }
+            else if(time_cnt>3000){
               roundabout_state=3;
               time_cnt=0;
             }
@@ -687,29 +697,54 @@ void Cam_B(){
           
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
+           //停车：
+         /* if(time_cnt>=300&&time_cnt<2000)
+            flag_stop=1;
+          else flag_stop=0;
+          */
+         
           
-          //用来检测什么时候出现分叉
+          //用来检测什么时候出现分叉//双重条件，增大识别的可能，非最终版
           time_cnt++;
-          if(road_B[45].mid<40 && cam_buffer[60-45][road_B[45].mid]>thr && time_cnt>=500){
-            roundabout_state=4;
-            time_cnt=0;
+          if(flag_stop==0){
+            if(isWider(road_B_near,100)){
+              roundabout_state=4;
+              time_cnt=0;
+            }
+            if(roundabout_choice==1)
+              if(road_B[49].mid<CAM_WID/2 && time_cnt>=500){
+                roundabout_state=4;
+                time_cnt=0;
+              }
+            else if(roundabout_choice==2)
+              if(road_B[49].mid>CAM_WID/2 && time_cnt>=500){
+                roundabout_state=4;
+                time_cnt=0;
+              }
           }
-          else if(time_cnt>10000) roundabout_state=0;
-          //如果未检测到，时间又长，说明已经出环岛，该情形下的代码未写………………………………可能会因此而出不了环岛锁定状态……………………………………
+          if(time_cnt>10000) roundabout_state=0;//约5s  大环岛建议去掉该行
+          //以上仅用作紧急处理，最好不要触发该条件
+          //如果未检测到，时间又长，说明已经出环岛………………………………如果太短可能会因此而出不了环岛锁定状态……………………………………
             //暂不考虑这种情况，因为大环岛与小环岛用时不同，不可一概而论，（更佳方案是检测纯直道，作为出岛标志）
           break;
         case 4://出环岛，又一次分道
+           //停车：
+          if(time_cnt>=0&&time_cnt<1500)
+            flag_stop=1;
+          else flag_stop=0;
+          
           time_cnt++;
           for(int i=1;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
-            if(roundabout_choice==1) road_B[i].mid = CAM_WID/2-25;
-            else if(roundabout_choice==2) road_B[i].mid = CAM_WID/2+25;
+            if(roundabout_choice==1) road_B[i].mid = constrain(0,CAM_WID/2,road_B[i].mid-30);
+            else if(roundabout_choice==2) road_B[i].mid = constrain(CAM_WID/2,CAM_WID,road_B[i].mid+30);
           }
-          road_width_thr=70;
-          if(!isWider(check_near) && time_cnt>=500){ //如果路宽回复正常，认为出环岛
+          //road_width_thr=70;
+          if(!isWider(road_B_near,70) && time_cnt>=1000){ //如果路宽回复正常，认为出环岛
             roundabout_state=0;
             time_cnt=0;
+            flag_stop=0;
           }
-          else if(time_cnt>2000) roundabout_state=0;
+          else if(time_cnt>10000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
           break;
         default:break;
         }
@@ -839,10 +874,10 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if (cross_cnt >= 400 && cross_cnt < 4400){
+        if (cross_cnt >= 100 && cross_cnt < 4100){
           flag_stop=1;
         }
-        else if (cross_cnt >= 4400 && cross_cnt < 5000){
+        else if (cross_cnt >= 4100 && cross_cnt < 5000){
           flag_stop=0;
           cross_turn=2;
         }
@@ -884,7 +919,7 @@ void Cam_B(){
     if (flag_cross==1 && cross_turn!=1) {
       if (cross_turn==0){
         dir = 200;
-        if (cross_cnt >= 400){
+        if (cross_cnt >= 100){
           cross_turn=1;
         }
       }
