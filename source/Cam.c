@@ -29,6 +29,7 @@ int margin=30;//弯道判断条件
 //十字弯处理========================================
 int left3;
 int right3;
+int width3=0;
 int flag_cross=0; //十字的判断条件
 int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
@@ -442,10 +443,12 @@ void Cam_B(){
       right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
      
      // else valid_row=ROAD_SIZE-3;
-      if ((right3-left3) > 120){
+      if ((right3-left3) > 120 && (right3-left3-width3) > 20){
         flag_cross=1;
         road_state=5;
       }
+      
+      width3 = right3 - left3;
     }
     
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
@@ -877,11 +880,11 @@ void Cam_B(){
         if (cross_cnt >= 100 && cross_cnt < 4100){
           flag_stop=1;
         }
-        else if (cross_cnt >= 4100 && cross_cnt < 5000){
+        else if (cross_cnt >= 4100 && cross_cnt < 5200){
           flag_stop=0;
           cross_turn=2;
         }
-        else if (cross_cnt>=5000){
+        else if (cross_cnt>=5200){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
