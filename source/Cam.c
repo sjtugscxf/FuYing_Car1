@@ -32,6 +32,7 @@ int right3;
 int flag_cross=0; //十字的判断条件
 int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
+int flag_stop=0;
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
@@ -845,7 +846,7 @@ void Cam_B(){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
-          flag_stop=0
+          flag_stop=0；
         }
         break;
       default:break;
@@ -894,6 +895,8 @@ void Cam_B(){
     //PWM以dir为参考，前期分级控制弯道速度；中期分段线性控速；后期找到合适参数的时候，再进行拟合——PWM关于dir的函数
     min_speed=MIN_SPEED;
     float range=constrain(0,50,max_speed-min_speed);//速度范围大小 
+    if(flag_stop==1) PWM(0,0,&L,&R);
+    else{
     if(car_state==2 ){
       //分段线性控速
       if(abs(dir)<50 ){//&& valid_row>valid_row_thr
@@ -923,6 +926,7 @@ void Cam_B(){
    {
       MotorL_Output(0); 
       MotorR_Output(0);
+   }
    }
     
     //方案二//暂时放弃
