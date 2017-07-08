@@ -442,7 +442,7 @@ void Cam_B(){
       right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
      
      // else valid_row=ROAD_SIZE-3;
-      if (left3<15 && right3>115){
+      if ((right3-left3) > 120){
         flag_cross=1;
         road_state=5;
       }
@@ -839,10 +839,14 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if (cross_cnt >= 600 && cross_cnt < 4400){
+        if (cross_cnt >= 400 && cross_cnt < 4400){
           flag_stop=1;
         }
-        else if (cross_cnt>=4400){
+        else if (cross_cnt >= 4400 && cross_cnt < 5000){
+          flag_stop=0;
+          cross_turn=2;
+        }
+        else if (cross_cnt>=5000){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
@@ -874,13 +878,18 @@ void Cam_B(){
     
     dir=constrainInt(-230,230,dir);
     
-    if(forced_turn==1) dir=-200;
-    else if(forced_turn==2) dir=200;
+    //if(forced_turn==1) dir=-200;
+    //else if(forced_turn==2) dir=200;
     
-    if (flag_cross==1 && cross_turn==0) {
-      dir = 200;
-      if (cross_cnt > 600){
-        cross_turn=1;
+    if (flag_cross==1 && cross_turn!=1) {
+      if (cross_turn==0){
+        dir = 200;
+        if (cross_cnt >= 400){
+          cross_turn=1;
+        }
+      }
+      else if (cross_turn == 2){
+        dir = -200;
       }
     }
     
