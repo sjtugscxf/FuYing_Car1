@@ -28,6 +28,7 @@ u8 is_stopline = 0;
 u8 cnt_zebra = 0;
 u8 delay_zebra1 = 0, delay_zebra2 = 0;
 u8 obstacle = 0;
+u8 last_obstacle = 0;
 int obstacleL[4],obstacleR[4];
 int curv_obstL = 0, curv_obstR = 0;
 
@@ -246,11 +247,24 @@ u8 find_obstacle()
   }*/
   curv_obstL = obstacleL[3] - obstacleL[2] - obstacleL[1] + obstacleL[0];
   curv_obstR = obstacleR[3] - obstacleR[2] - obstacleR[1] + obstacleR[0];
-  if(curv_obstL < -15 && curv_obstR > -3 || curv_obstR < 4)
+  if((curv_obstL < -15 || curv_obstL > 10) && (curv_obstR > -3 || curv_obstR < 4))
+  {
+    if(last_obstacle != 1)
+      last_obstacle = 1;
     return 1;
-  else if(curv_obstR > 15 && curv_obstL < 3 || curv_obstL > -4)
+  }
+  else if((curv_obstR > 15 || curv_obstL < -10) && (curv_obstL < 3 || curv_obstL > -4))
+  {
+    if(last_obstacle != 2)
+      last_obstacle = 2;
     return 2;
-  else return 0;
+  }
+  else
+  {
+    if(last_obstacle != 0)
+      last_obstacle = 0;
+    return 0;
+  }
 }
 /*
 double getSlope_(int x1, int y1, int x2, int y2)
@@ -432,12 +446,12 @@ void Cam_B(){
     if(is_stopline == 0 && is_stop_line(45) == 1)
     {
       is_stopline++;
-      delay_zebra1 = 20;
+      delay_zebra1 = 10;
     }
     else if(is_stopline == 1 && delay_zebra1 == 0 && is_stop_line(45) == 1)
     {
       is_stopline++;
-      delay_zebra1 = 20;
+      delay_zebra1 = 10;
     }
     else if(is_stopline == 2 && delay_zebra1 == 0 && is_stop_line(50) == 1)
     {
@@ -915,10 +929,10 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
-    /*if(obstacle == 1)
-      dir += 25;
+    if(obstacle == 1)
+      dir += 50;
     else if(obstacle == 2)
-      dir -= 25;*/
+      dir -= 50;
     
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
@@ -957,11 +971,11 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      /*if(obstacle > 0)
+      if(obstacle > 0)
       {
-        motor_L *= 0.9;
-        motor_R *= 0.9;
-      }*/
+        motor_L *= 0.7;
+        motor_R *= 0.7;
+      }
       if(is_stopline == 4)
         PWM(0, 0, &L, &R);
       else PWM(motor_L, motor_R, &L, &R);               //∫Û¬÷ÀŸ∂»

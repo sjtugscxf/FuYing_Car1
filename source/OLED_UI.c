@@ -118,7 +118,7 @@ void displayParameters()//menu==1
       //{"pit0 time",pit0_time},  {"pit1 time",pit1_time},
   {"is_stopline", is_stopline},
   //{"cnt_zebra", cnt_zebra},
-  {"obstacle", obstacle},
+  {"obstacle", last_obstacle},
   {"curv_L", curv_obstL},
   {"curv_R", curv_obstR}
       //{"C.r",C.r},{"C.sign",C.sign}

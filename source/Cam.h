@@ -80,6 +80,7 @@ extern int obstacleL[4],obstacleR[4];
 extern int curv_obstL, curv_obstR;
 
 extern u8 obstacle;//0 for none, 1 for left, 2 for right;
+extern u8 last_obstacle;
 
 extern float motor_L;
 extern float motor_R;
