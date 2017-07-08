@@ -426,8 +426,6 @@ void Cam_B(){
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)     //寻找有效行
     {
       mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
-      left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
-      right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
       if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
      // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
       {
@@ -435,20 +433,15 @@ void Cam_B(){
         valid_row=i_valid;
       }
      // else valid_row=ROAD_SIZE-3;
-      if (left3<35 && right3>95){
-        flag_valid_row=1;
-        flag_cross=1;
-        road_state=5;
-      }
     }
     
-    for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_cross==0;i_valid++)     //寻找有效行
+    for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_cross==0;i_valid++)     //寻找十字弯
     {
       left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
       right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
      
      // else valid_row=ROAD_SIZE-3;
-      if (left3<35 && right3>95){
+      if (left3<15 && right3>115){
         flag_cross=1;
         road_state=5;
       }
@@ -845,13 +838,14 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if (cross_cnt > 600 && cross_cnt < 4400){
-          PWM(0, 0, &L, &R);
+        if (cross_cnt >= 600 && cross_cnt < 4400){
+          flag_stop=1;
         }
-        else if (cross_cnt>4400){
+        else if (cross_cnt>=4400){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
+          flag_stop=0
         }
         break;
       default:break;
