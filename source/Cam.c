@@ -34,6 +34,7 @@ int flag_cross=0; //十字的判断条件
 int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
 int flag_stop=0;
+int cross_times=0; // 判断成十字的次数
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
@@ -445,7 +446,7 @@ void Cam_B(){
      
      // else valid_row=ROAD_SIZE-3;
       if ((right3-left3) > 120){
-        if ((right3-left3-width3)>30){
+        if ((right3-left3-width3)>10){
            flag_cross=1;
            road_state=5;
            cross_turn=2;
@@ -470,6 +471,7 @@ void Cam_B(){
     if (flag_cross==1){
       road_state=5;
       cross_turn=2;
+      cross_times++;
     }
     }
     
@@ -884,11 +886,28 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if (cross_cnt >= 100 && cross_cnt < 4100){
+        if ((cross_times%2)==1){
+        if (cross_cnt >= 60 && cross_cnt < 4100){
           flag_stop=1;
           cross_turn=3;
         }
-        else if (cross_cnt >= 4100 && cross_cnt < 5200){
+        else if (cross_cnt >= 4100 && cross_cnt < 5000){
+          flag_stop=0;
+          cross_turn=1;
+        }
+        else if (cross_cnt>=5000){
+          flag_cross=0;
+          cross_cnt=0;
+          cross_turn=0;
+          flag_stop=0;
+        }
+        }
+        else if ((cross_times%2)==0){
+        if (cross_cnt >= 200 && cross_cnt < 4200){
+          flag_stop=1;
+          cross_turn=3;
+        }
+        else if (cross_cnt >= 4200 && cross_cnt < 5200){
           flag_stop=0;
           cross_turn=1;
         }
@@ -897,6 +916,7 @@ void Cam_B(){
           cross_cnt=0;
           cross_turn=0;
           flag_stop=0;
+        }
         }
         break;
       default:break;
