@@ -436,7 +436,7 @@ void Cam_B(){
      // else valid_row=ROAD_SIZE-3;
     }
     
-    for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_cross==0;i_valid++)     //Ñ°ÕÒÊ®×ÖÍä
+    for(int i_valid=0;i_valid<(25-3) && flag_cross==0;i_valid++)     //Ñ°ÕÒÊ®×ÖÍä
     {
       left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
       right3 = (road_B[i_valid].right+road_B[i_valid+1].right+road_B[i_valid+2].right)/3;
@@ -846,7 +846,7 @@ void Cam_B(){
           flag_cross=0;
           cross_cnt=0;
           cross_turn=0;
-          flag_stop=0£»
+          flag_stop=0;
         }
         break;
       default:break;
