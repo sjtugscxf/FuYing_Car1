@@ -34,8 +34,8 @@ void Cam_Algorithm();
 void Cam_Init();
 
 //宏定义======================
-#define CAM_WID 134//摄像头有效宽度//与摄像头安放位置有关//正常值128
-#define Dir_Kp 7.75    //舵机比例控制参数
+#define CAM_WID 128//摄像头有效宽度//与摄像头安放位置有关//正常值128
+#define Dir_Kp 8    //舵机比例控制参数
 #define Dir_Kd 4.25  //舵机微分控制参数
 #define thr 70//黑白阈值，目前无需调
 #define ROAD_SIZE 50 //利用的摄像头数据行数
@@ -121,6 +121,7 @@ extern int flag_cross; //十字的判断条件
 extern int cross_cnt; //十字弯计数
 extern int cross_turn; //在十字弯是否靠右停下
 extern int cross_times; // 判断成十字的次数
+extern int buf_time;    //————————————
 extern int right_time;//——————————————
 extern int left_time;//——————————————
 extern int cross_end; //判断十字是否结束

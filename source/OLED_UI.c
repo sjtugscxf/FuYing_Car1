@@ -59,6 +59,7 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
+      {"is_stop?",is_stopline},{"car_type",car_type},
   {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
   {"battery",battery},  {"valid_row",valid_row}, 
   {"hole_line",road_hole_row},    {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
@@ -73,7 +74,7 @@ void displayParameters()//menu==1
       {"car_state",car_state},
       {"tacho0",tacho0},{"tacho1",tacho1},
       {"motor_L",motor_L},{"motor_R",motor_R},
-      {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
+     // {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
     },
     //==============
     { 
@@ -207,14 +208,31 @@ void displayDebug()//menu==3
   case 2:
     Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,MAX_SPEED);
     if(!Key2() && flag_down==0) {MAX_SPEED+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && max_speed>min_speed+1) {MAX_SPEED-=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && MAX_SPEED>MIN_SPEED) {MAX_SPEED-=1;flag_down=1;}
     break;
+  /*
   case 3:
     Oled_Putstr(6,0,"Debugging MinSpeed"); Oled_Putnum(7,11,MIN_SPEED);
     if(!Key2() && flag_down==0) {MIN_SPEED+=1;flag_down=1;}
     if(!Key3() && flag_down==0 && MIN_SPEED>1) {MIN_SPEED-=1;flag_down=1;}
     break;
+    */
+  case 3:
+    Oled_Putstr(6,0,"Debugging buf_time"); Oled_Putnum(7,11,buf_time);
+    if(!Key2() && flag_down==0) {buf_time+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {buf_time-=10;flag_down=1;}
+    break;
   case 4:
+    Oled_Putstr(6,0,"Debugging left_time"); Oled_Putnum(7,11,left_time);
+    if(!Key2() && flag_down==0) {left_time+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {left_time-=10;flag_down=1;}
+    break;
+  case 5:
+    Oled_Putstr(6,0,"Debugging right_time"); Oled_Putnum(7,11,right_time);
+    if(!Key2() && flag_down==0) {right_time+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {right_time-=10;flag_down=1;}
+    break;
+ /* case 4:
     Oled_Putstr(6,0,"Debugging jump_thr"); Oled_Putnum(7,11,jump_thr);
     if(!Key2() && flag_down==0) {jump_thr+=1;flag_down=1;}
     if(!Key3() && flag_down==0) {jump_thr-=1;flag_down=1;} 
@@ -224,21 +242,7 @@ void displayDebug()//menu==3
     if(!Key2() && flag_down==0) {roundabout_choice=1;flag_down=1;}
     if(!Key3() && flag_down==0) {roundabout_choice=2;flag_down=1;} 
     break;
-/*  case 4:
-    Oled_Putstr(6,0,"Debugging c1"); Oled_Putnum(7,11,c1);
-    if(!Key2() && flag_down==0) {c1+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c1-=1;flag_down=1;}
-    break;
-  case 5:
-    Oled_Putstr(6,0,"Debugging c2"); Oled_Putnum(7,11,c2);
-    if(!Key2() && flag_down==0) {c2+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c2-=1;flag_down=1;}
-    break;
-  case 6:
-    Oled_Putstr(6,0,"Debugging c3"); Oled_Putnum(7,11,c3);
-    if(!Key2() && flag_down==0) {c3+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c3-=1;flag_down=1;}
-    break;*/
+    */
   default:break;
   }
   
@@ -268,26 +272,7 @@ void drawCam(bool(*isTarget)(u8 x)) {
   }
   Oled_DrawBMP(0, 0, 128, 64, buf);
 }
-/*
-void drawCam2(bool(*isTarget)(u8 x)) {
-  int row, col, i;
-  u8 buf[1024];
-  u8 *p = buf;
-    
-  for (row = IMG_ROWS-1; row >= 0; row -= 8) {
-    for (col = IMG_COLS-1; col >= 0 ; col--) {
-      u8 tmp = 0;
-      for (i = 0; i < 8; i++) {
-        tmp <<= 1;
-        if (isTarget(cam_buffer2[row-i][col]))
-          tmp |= 0x01;
-      }
-      *p++ = tmp;
-    }
-  }
-  Oled_DrawBMP(0, 0, 128, 64, buf);
-}
-*/
+
 bool isWhite(u8 x) {     //白色阈值，场地理想后好像没什么用
   return x > 70;
 }

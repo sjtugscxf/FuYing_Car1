@@ -116,6 +116,7 @@ void PIT1_IRQHandler(){
   Bell_Service();
   
   UI_SystemInfo();
+
   
   //===========
   if(delay_zebra1 > 0)
