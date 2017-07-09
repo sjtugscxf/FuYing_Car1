@@ -35,8 +35,8 @@ int cross_cnt=0; //十字弯计数
 int cross_turn=0; //在十字弯是否靠右停下
 int flag_stop=0;
 int cross_times=0; // 判断成十字的次数
-int right_time=40;//for debug   //40
-int left_time=1650;
+int right_time=100;//for debug   //40
+int left_time=1700;
 int right_time2=150;
 int left_time2=1000;
 int cross_end=0; //判断十字是否结束
@@ -465,7 +465,8 @@ void Cam_B(){
       if (flag_wide==1 && i_valid==46){
         flag_cross=1;
         road_state=5;
-        cross_turn=2;
+        cross_turn=3;
+        flag_stop=1;
       }
     }
     }
@@ -482,7 +483,7 @@ void Cam_B(){
       }
     }
     
-    if (flag_cross==1 && roundabout_state==0 && cross_end=0){
+    if (flag_cross==1 && roundabout_state==0 && cross_end==0){
       road_state=5;
       cross_turn=2;
       if (cross_cnt==0){
@@ -907,8 +908,12 @@ void Cam_B(){
         break;
       case 5:
         cross_cnt++;
-        if ((cross_times%2)==1){
-        if (cross_cnt >= right_time && cross_cnt < 4100){
+        //if ((cross_times%2)==1){
+        if (cross_cnt >= 100 && cross_cnt < 100 + right_time){
+          cross_turn = 2;
+          flag_stop=0;
+        }
+        if (cross_cnt >= 100+right_time && cross_cnt < 4100){
           flag_stop=1;
           cross_turn=3;
         }
@@ -925,8 +930,9 @@ void Cam_B(){
         }
         }
         
+        /*
         else if ((cross_times%2)==0){
-        if (cross_cnt >= right_time2 && cross_cnt < 4200){
+        if (cross_cnt >= 100+right_time2 && cross_cnt < 4200){
           flag_stop=1;
           cross_turn=3;
         }
@@ -941,7 +947,8 @@ void Cam_B(){
           flag_stop=0;
           cross_end=1;
         }
-        }
+        }*/
+        
         break;
       default:break;
     }
@@ -973,13 +980,13 @@ void Cam_B(){
     
     if (flag_cross==1 && cross_turn!=0) {
       if (cross_turn==2){
-        dir= 110;
+        dir= 120;
       }
       else if (cross_turn == 3){
         dir=0;
       }
       else if (cross_turn == 1){
-        dir = 50;
+        dir = 60;
       }
     }
     
