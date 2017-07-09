@@ -39,6 +39,7 @@ int right_time=60;//for debug   //40
 int left_time=1700;
 int right_time2=200;
 int left_time2=1000;
+int cross_end=0; //判断十字是否结束
 //环岛处理========================================
 int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
 int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
@@ -442,7 +443,7 @@ void Cam_B(){
      // else valid_row=ROAD_SIZE-3;
     }
     
-    if (roundabout_state==0){
+    if (roundabout_state==0 && cross_end==0){
     for(int i_valid=0;i_valid<(40-3) && flag_cross==0;i_valid++)     //寻找十字弯
     {
       left3 = (road_B[i_valid].left+road_B[i_valid+1].left+road_B[i_valid+2].left)/3;
@@ -463,7 +464,7 @@ void Cam_B(){
     }
     
     if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
-    if(roundabout_state==0 && flag_cross==0){    //非环岛锁定时，才选择直道或者弯道
+    if(roundabout_state==0 && flag_cross==0){    //非环岛和十字锁定时，才选择直道或者弯道
       if(valid_row<valid_row_thr){
         road_state=2;                     //弯道
         //cnt_miss++;
@@ -474,11 +475,18 @@ void Cam_B(){
       }
     }
     
-    if (flag_cross==1 && roundabout_state==0){
+    if (flag_cross==1 && roundabout_state==0 && cross_end=0){
       road_state=5;
       cross_turn=2;
       if (cross_cnt==0){
         cross_times++;}
+    }
+    
+    if (cross_end > 0){
+      cross_end++;
+      if (cross_end >= 4000){
+        cross_end=0;
+      }
     }
     
     //累积miss数量清零
@@ -906,6 +914,7 @@ void Cam_B(){
           cross_cnt=0;
           cross_turn=0;
           flag_stop=0;
+          cross_end=1;
         }
         }
         
@@ -923,6 +932,7 @@ void Cam_B(){
           cross_cnt=0;
           cross_turn=0;
           flag_stop=0;
+          cross_end=1;
         }
         }
         break;
