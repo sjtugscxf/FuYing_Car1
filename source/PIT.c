@@ -117,6 +117,12 @@ void PIT1_IRQHandler(){
   
   UI_SystemInfo();
   
+  //===========
+  if(delay_zebra1 > 0)
+    delay_zebra1--;
+  if(delay_zebra2 > 0)
+    delay_zebra2--;
+  
   
   //------------ Other -------------
   
