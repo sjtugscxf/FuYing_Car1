@@ -972,7 +972,7 @@ void Cam_B(){
         dir=0;
       }
       else if (cross_turn == 1){
-        dir = 40
+        dir = 40;
       }
     }
     
@@ -990,7 +990,7 @@ void Cam_B(){
     if(flag_stop==1) PWM(0,0,&L,&R);
     
     else if (cross_turn==1){
-      PWMne(10, 10, *L, *R)
+      PWMne(10, 10, &L, &R);
     }
     
     else{
