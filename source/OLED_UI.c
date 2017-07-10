@@ -59,12 +59,14 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
-      {"is_stop?",is_stopline},{"car_type",car_type},
-  {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
-  {"battery",battery},  {"valid_row",valid_row}, 
-  {"hole_line",road_hole_row},    {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
+     
+  {"road_state",road_state},    {"round_state",roundabout_state},               {"round_choice",roundabout_choice},
+  {"is_stop",is_stopline},      {"car_type",car_type},
+  {"bt_stop",bt_stop},          {"bt_ok",bt_ok},
+  {"battery",battery},          {"valid_row",valid_row}, 
+  {"hole_line",road_hole_row},  {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
   
-  {"sum_l",suml},{"sum_r",sumr},
+  {"sum_l",suml},               {"sum_r",sumr},
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
   {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
