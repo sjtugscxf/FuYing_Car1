@@ -18,8 +18,8 @@ float weight[6][10] ={ {0,0,0,0,0,0,0,0,0,0},   //0 停车
 //{1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29}
 //{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}
 };//本来是为直、弯、环岛三个路况分别设置的权重，低速下不用考虑，高速可能会有细微区别。
-int MAX_SPEED=30;
-int MIN_SPEED=14;
+int MAX_SPEED=20;
+int MIN_SPEED=15;
 int road_B_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定
                   //CAR1对应路宽 5 -> 直道50+ or 弯道70+ or 入环岛或十字110+ or 出环岛可能80~100+ 
                   //目前CAR1--10  CAR2--0
@@ -442,8 +442,14 @@ void Cam_B(){
     static float last_err;
     err = mid_ave  - CAM_WID / 2;
 
-    dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
-  //  if(dir>0)
+    //dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
+   if(err<6&&err>-6) dir = 3*err;
+   else
+   {
+     if(err>0) dir = (int)(0.4 * err * err);
+     else dir = -(int)(0.4 * err * err);
+   }
+      //  if(dir>0)
    //   dir*=1.2;//修正舵机左右不对称的问题//不可删
     last_err = err;
     
@@ -494,18 +500,18 @@ void Cam_B(){
       }
       else if(abs(dir)<95){
         motor_L=motor_R=max_speed-0.33*range*(abs(dir)-50)/45;
-        if(dir>0) motor_R=constrain(0,motor_R,motor_R*0.7);//右转
-        else motor_L=constrain(0,motor_L,motor_L*0.7);//0.9
+        if(dir>0) motor_R=constrain(0,motor_R,motor_R* speed_diff(dir) );//右转
+        else motor_L=constrain(0,motor_L,motor_L*speed_diff(dir));//0.9
       }
       else if(abs(dir)<185){    
         motor_L=motor_R=max_speed-0.33*range-0.33*range*(abs(dir)-95)/90;
-        if(dir>0) motor_R=constrain(0,motor_R,motor_R*0.8);//右转
-        else motor_L=constrain(0,motor_L,motor_L*0.8);//0/8
+        if(dir>0) motor_R=constrain(0,motor_R,motor_R*speed_diff(dir));//右转
+        else motor_L=constrain(0,motor_L,motor_L*speed_diff(dir));//0/8
       }
       else if(abs(dir)<230){
         motor_L=motor_R=max_speed-0.66*range-0.33*range*(abs(dir)-185)/45;
-        if(dir>0) motor_R=constrain(0,motor_R,motor_R*0.9);//右转
-        else motor_L=constrain(0,motor_L,motor_L*0.9);//0.7
+        if(dir>0) motor_R=constrain(0,motor_R,motor_R*speed_diff(dir));//右转
+        else motor_L=constrain(0,motor_L,motor_L*speed_diff(dir));//0.7
       }//以上的差速控制参数未确定，调参时以车辆稳定行驶为目标
       else{
         motor_L=motor_R=min_speed;
@@ -522,6 +528,14 @@ void Cam_B(){
     
 }
 
+float speed_diff(int dir0)
+{
+  float diffe = 0;
+  if(dir0>0) diffe = 1.0- 0.0015 * dir0;
+  else diffe = 1.0 + 0.0015 * dir0;
+
+  return diffe;
+}
 
 float constrain(float lowerBoundary, float upperBoundary, float input)
 {

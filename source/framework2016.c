@@ -61,7 +61,8 @@ void main (void)
     set_oled_menu();
     if(car_state!=0)
       Cam_B();
-    Cam_Algorithm();
+    //Cam_Algorithm();
+    //PWM(10, 10, &L, &R);
   }
 
 }

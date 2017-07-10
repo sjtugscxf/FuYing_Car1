@@ -137,4 +137,6 @@ extern float min_speed;//=MIN_SPEED;
 
 //OLEDµ÷²Î
 extern PIDInfo debug_dir;
+
+float speed_diff(int dir0);
 #endif

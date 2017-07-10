@@ -25,6 +25,10 @@ double L_err = 0;
 double R_err = 0;
 double L_pwm = 0;
 double R_pwm = 0;
+double L_pwm_out = 0;
+double R_pwm_out = 0;
+double L_pwm_last = 0;
+double R_pwm_last = 0;
 
 
 
@@ -33,16 +37,22 @@ int16 speed_set = 0;
 void PID_Init() 
 {
   L.kp = 5;
-  L.ki = 2;
+  L.ki = 1;
   L.kd = 0;
   R.kp = 5;
-  R.ki = 2;
+  R.ki = 1;
   R.kd = 0;
   
   L.lastErr=0;
   L.errSum=0;
   R.lastErr=0;
   R.errSum=0;
+  
+  L_pwm_out = 0;
+  R_pwm_out = 0;
+  L_pwm_last = 0;
+  R_pwm_last = 0;
+
 
   //临时测试用：
   debug_dir.kp=0;
@@ -55,11 +65,11 @@ void PWM(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)      //前进的PID
   L_err=left_speed+tacho0;
   R_err=right_speed-tacho1;
   L->errSum+=L_err;
-  if(L->errSum>300) L->errSum=300;
-  if(L->errSum<-300) L->errSum=-300;
+  if(L->errSum>500) L->errSum=500;
+  if(L->errSum<-500) L->errSum=-500;
   R->errSum+=R_err;
-  if(R->errSum>300) R->errSum=300;
-  if(R->errSum<-300)R->errSum=-300;
+  if(R->errSum>500) R->errSum=500;
+  if(R->errSum<-500)R->errSum=-500;
   L_pwm=(L_err*L->kp + L->errSum*L->ki + (L_err-L->lastErr)*L->kd);
   R_pwm=(R_err*R->kp + R->errSum*R->ki + (R_err-R->lastErr)*R->kd);
   L->lastErr=L_err;
@@ -69,8 +79,23 @@ void PWM(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)      //前进的PID
   if(R_pwm>700)  R_pwm=700;
   if(L_pwm<-700)  L_pwm=-700;
   if(R_pwm<-700)  R_pwm=-700;
+  
+  //L_pwm_out = L_pwm_last + L_pwm;
+  //R_pwm_out = R_pwm_last + R_pwm;
+  
+  //if(L_pwm_out>700)  L_pwm_out=700;
+  //if(R_pwm_out>700)  R_pwm_out=700;
+  //if(L_pwm_out<-700)  L_pwm_out=-700;
+  //if(R_pwm_out<-700)  R_pwm_out=-700;
+  
+  //L_pwm_last = L_pwm_out;
+  //R_pwm_last = R_pwm_out;
+  
   MotorL_Output((int)(-L_pwm)); 
   MotorR_Output((int)(-R_pwm));
+  
+  //MotorL_Output((int)(-L_pwm_out)); 
+  //MotorR_Output((int)(-R_pwm_out));
 }
 
 void PWMne(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)   //后退的PID控制，都是输入正数，输入负数有奇怪的bug
@@ -111,9 +136,9 @@ void PIT1_IRQHandler(){
   
   LED1_Tog();
   
-  UI_Operation_Service();
+  //UI_Operation_Service();
   
-  Bell_Service();
+  //Bell_Service();
   
   UI_SystemInfo();
 

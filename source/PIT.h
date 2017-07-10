@@ -39,6 +39,7 @@ typedef struct {
 	double lastErr, llastErr;
 	double pid;
         double errSum;
+          
 } PIDInfo;
 
 extern PIDInfo L, R;
