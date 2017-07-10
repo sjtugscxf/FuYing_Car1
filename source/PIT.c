@@ -36,10 +36,10 @@ int16 speed_set = 0;
 
 void PID_Init() 
 {
-  L.kp = 5;
+  L.kp = 0;
   L.ki = 2;
   L.kd = 0;
-  R.kp = 5;
+  R.kp = 0;
   R.ki = 2;
   R.kd = 0;
   
