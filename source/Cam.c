@@ -6,8 +6,10 @@
 u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
 //特别声明（两车不同的部分）=================================================
-float weight[6][10] ={ {0,0,0,0,0,0,0,0,0,0},   //0 停车
-{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},// 1 直道
+enum car_type car_type=leader;//前后车标志 1=前车 2=后车
+float weight[6][10] ={ 
+{0,0,0,0,0,     0,0,0,0,0},   //0 停车
+{1,1,1,1,1,     1,1,1,1,1},// 1 直道
 {1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},// 2 弯道
 {1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},// 3 环岛
 {1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},// 4 障碍
@@ -35,16 +37,21 @@ int valid_row=0;//与有效行相关，后期用来速控
 int valid_row_thr=25;//有效行阈值，区分直道和大弯道
 enum car_state car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 enum road_state road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
-                  //2 状态下减速//双车======================================
-enum car_type car_type=1;//前后车标志 1=前车 2=后车
+                  //2 状态下减速
+//双车======================================
 bool flag_stop=0;
-enum overtake_state overtake_state=0;//超车状态      0=无超车     1=主动超车（保持速度或者加速）          2=被超车（减速或停车） 
+bool bt_stop=0;//终点停车标志位
+bool bt_ok=0;//完成通讯的标志位
+int bt_delay=10;//允许蓝牙通讯滞后的while循环数，未测试……………………………………………………
+enum overtake_state overtake_state=0;//超车状态      0=非超车状态     1=超车状态          
 enum remote_state remote_state = 0;//蓝牙通讯   
   //0=各自正常行驶   
   //1=我（前车）可以被超车，你（后车）收到后设overtake_state为1  
   //2=我（后车）开始超车，你（前车）收到后设overtake_state为2      
   //3=我（后车)完成超车，我和你（前车）收到后设overtake_state为0，同时两车前后车状态反转
   //？？4=我（后车）超不了车，（因为你留的空不够？），咱继续跑……just a joke
+  //5=我（前车）检测到停车线啦，我们准备停车……，然后前车在一定时延后停下并保持向后车发送距离信息，后车依据距离信息控制停车
+  //
   //超车时机：启动超车（利用延时）   十字超车    环岛超车    直道超车        //暂时不需要把这个状态通讯？
 
 //环岛检测与处理========================================
@@ -66,6 +73,12 @@ u8 cnt_zebra = 0;
 u8 delay_zebra1 = 0, delay_zebra2 = 0;//1 for the first, should pass; 2 for the second, should stop
 
 //十字弯处理==============
+enum cross_state cross_state=no_cross;
+//0=no_cross无十字
+//1=cross_detect检测到十字
+//2=cross_stop前车停车避让
+//3=cross_back前车变后车之后，倒退以重进十字
+//4=cross_go十字当做直道来行驶 （需要处理路肩！！！！！！！！！！！！！！！！！！！！）
 int left3;
 int right3;
 int flag_cross=0; //十字的判断条件
@@ -160,10 +173,14 @@ void Cam_B(){
       delay_zebra2 = 5;
     }
     else if(is_stopline == 3 && delay_zebra2 == 0){
-      is_stopline++;
+      is_stopline++;//此时终点停车
+      //以下添加通讯代码
+      if(car_type==leader && bt_ok==0){
+        UART_SendChar('c');
+      }
       flag_ignore=1;
     }
-    
+    //ignore_time建议改为中断时间
     if(flag_ignore==1 && ignore_time<1000)      //这个时间依赖于车速，而且希望“起点”与环岛不要靠的太近，否则真正的环岛也会被屏蔽掉
       ignore_time++;
     else {
@@ -218,6 +235,7 @@ void Cam_B(){
               roundabout_state=1;
               state_set=1;
               time_cnt=0;
+              if(car_type==leader) bt_ok=0;
             }
             break;
           }
@@ -226,7 +244,7 @@ void Cam_B(){
     }
     
         //寻找十字————————————————————————
-    if(state_set==0 && car_type==before){
+    if(state_set==0){
       flag_wide=0;
       for(int i_valid=0;i_valid<(50-3) && flag_cross==0;i_valid++)     //寻找十字弯
       {
@@ -247,13 +265,11 @@ void Cam_B(){
         if (flag_wide==1 && i_valid==46){
           state_set=1;
           road_state=5;
-          cross_turn=3;
-          flag_stop=1;
+          cross_state=cross_detect;
+          cross_cnt=0;
+          if(car_type==leader) bt_ok=0;
         }
       }
-      //找到后：
-      
-      
     }
     
     //最后，区分直弯-----------------------------
@@ -336,16 +352,21 @@ void Cam_B(){
           */
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
-           //停车，发通讯：
-          if(time_cnt>=300&&time_cnt<2000)
-            flag_stop=1;
-          else flag_stop=0;
-          
-         
-          
-          //用来检测什么时候出现分叉//三重条件，增大识别的可能，非最终版
           time_cnt++;
-          if(flag_stop==0){
+          if(time_cnt>1000) time_cnt=400;
+          if(car_type==leader){
+             //发通讯：
+            if(bt_ok==0)
+              UART_SendChar('a'); //告诉后车你可以超车了
+            //停车：
+            if(time_cnt>=300)
+              flag_stop=1;
+            else flag_stop=0;
+          }
+          else if(car_type==follower){
+            //只有后车才能行驶
+            flag_stop=0;
+            //三重出岛识别条件，绝对能出岛！
             if(isWider(road_B_near,100)){
               roundabout_state=4;
               time_cnt=0;
@@ -366,7 +387,6 @@ void Cam_B(){
                    roundabout_state=4;
                    time_cnt=0;
                  }
-              
           }
          // if(time_cnt>10000) roundabout_state=0;//约5s  大环岛建议去掉该行
           //以上仅用作紧急处理，最好不要触发该条件
@@ -375,11 +395,13 @@ void Cam_B(){
           break;
         case 4://出环岛，又一次分道
            //发通讯：
-              //停车测试
+          if(car_type==follower && bt_ok==0)
+            UART_SendChar('b');   //告诉前车，我超过你了
+          //停车测试，以下
           if(time_cnt>=0&&time_cnt<1500)
             flag_stop=1;
           else flag_stop=0;
-          
+          //以上停车测试，可删
           time_cnt++;
           for(int i=1;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
             if(roundabout_choice==1) road_B[i].mid = constrain(0,CAM_WID/2,road_B[i].mid-10);
@@ -391,37 +413,85 @@ void Cam_B(){
             state_set=0;
             time_cnt=0;
             flag_stop=0;
+            bt_ok=0;
           }
           else if(time_cnt>10000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
           break;
         default:break;
         }
         break;
+        
       case 4://障碍
         break;
+        
       case 5://十字
-        if (car_type==before){
+        if(car_type==leader && bt_ok==0)
+            UART_SendChar('a');//告诉后车可以超车
+        
+        switch(cross_state){
+        case no_cross://无处理
+          break;
+          
+        case cross_detect:
           cross_cnt++;
-            
-          if (cross_cnt >= buf_time && cross_cnt < buf_time + right_time){
+          if(car_type==leader && overtake_state==in_overtake){
+            cross_cnt=0;
+            cross_state=cross_stop;
+          }
+          else if(car_type==follower || cross_cnt>bt_delay){                          //后车状态或者非超车（通讯未完成）状态，转为穿越十字状态
+            cross_cnt=0;
+            cross_state=cross_go;
+          }
+          break;
+          
+        case cross_stop:        //此时必定是前车状态
+          cross_cnt++;
+          if(cross_cnt<buf_time){
+            cross_turn=3;
+            flag_stop=1;
+          }
+          else if (cross_cnt >= buf_time && cross_cnt < buf_time + right_time){
             cross_turn = 2;
             flag_stop=0;
           }
-          else if (cross_cnt >= buf_time+right_time && cross_cnt < buf_time+right_time+1000){        //后判定条件改为蓝牙通讯
-            flag_stop=1;
+          else if (cross_cnt >= buf_time+right_time && overtake_state==in_overtake){       
             cross_turn=3;
+            flag_stop=1;
           }
-          else if (cross_cnt >= buf_time+right_time+1000 && cross_cnt < buf_time+right_time+1000+left_time){
+          if(overtake_state==no_overtake){      //完成超车，前车变后车    //变化条件写在超声波通讯里
+            cross_state=cross_back;
+            cross_cnt=0;
+          }
+          break;
+          
+        case cross_back:        //此时必定是后车状态，倒车
+          cross_cnt++;
+          if (cross_cnt < left_time){
             flag_stop=0;
             cross_turn=1;
           }
-          else if (cross_cnt>=buf_time+right_time+1000+left_time){
-            car_type=behind;
+          else{
+            cross_state=cross_go;
             cross_cnt=0;
             cross_turn=0;
             flag_stop=0;
-            state_set=0;
           }
+          break;
+          
+        case cross_go:
+          //处理在此
+          /*
+              //需要考虑避障、补全路肩
+          */
+          //处理完成：
+          //转过270°且road_B[0].width<128?后，出cross_state//此条件需要改！！！！！！！！！！！
+          if(1){
+            state_set=0;
+            cross_state=no_cross;
+            bt_ok=0;
+          }
+          break;
+        default:break;
         }
         break;
       default:break;
@@ -444,13 +514,10 @@ void Cam_B(){
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
   //  if(dir>0)
-   //   dir*=1.2;//修正舵机左右不对称的问题//不可删
+   //   dir*=1.2;//修正舵机左右不对称的问题//如今已不需要
     last_err = err;
     
-    dir=constrainInt(-230,230,dir);
-    //斑马线：
-    if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
-      dir = 0;
+    //特殊处理如下：
     //十字：
     if(road_state==5){
       //控向
@@ -464,13 +531,15 @@ void Cam_B(){
         dir = 75;
       }
     }
-    
+    //终点线
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
     
     //舵机输出与手动停车：
-    if(car_state!=0)
+    if(car_state!=0){
+      dir=constrainInt(-230,230,dir);
       Servo_Output(dir);
+    }
     else   
       Servo_Output(0);
     

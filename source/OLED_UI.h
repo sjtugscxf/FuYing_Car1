@@ -1,7 +1,7 @@
 #ifndef OLED_UI_H
 #define OLED_UI_H
 
-#define Rows 26
+#define Rows 30
 #define Pages 6
 
 //=== Global variables===
