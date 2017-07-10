@@ -119,8 +119,8 @@ void displayParameters()//menu==1
   {"is_stopline", is_stopline},
   //{"cnt_zebra", cnt_zebra},
   {"obstacle", last_obstacle},
-  {"curv_L", curv_obstL},
-  {"curv_R", curv_obstR}
+  {"curv_L", curv_obstL[0]},
+  {"curv_R", curv_obstR[0]}
       //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
@@ -128,15 +128,19 @@ void displayParameters()//menu==1
       {"obstL[1]",obstacleL[1]},
       {"obstL[2]",obstacleL[2]},
       {"obstL[3]",obstacleL[3]},
+      {"obstL[4]",obstacleL[4]},
+      {"obstL[5]",obstacleL[5]},
       {" ",1111},
       {"obstR[0]",obstacleR[0]},
       {"obstR[1]",obstacleR[1]},
       {"obstR[2]",obstacleR[2]},
       {"obstR[3]",obstacleR[3]},
+      {"obstR[4]",obstacleR[4]},
+      {"obstR[5]",obstacleR[5]},
       {" ",1111},
       
       
-      {"mid_ave",mid_ave},
+      {"mid_ave",mid_ave}
    /* {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[1].mid},         {"mid[2]",road_B[2].mid}, 
       {"mid[3]",road_B[3].mid},     {"mid[4]",road_B[4].mid},         {"mid[5]",road_B[5].mid}, 
       {"mid[6]",road_B[6].mid},     {"mid[7]",road_B[7].mid},         {"mid[8]",road_B[8].mid},
@@ -146,8 +150,8 @@ void displayParameters()//menu==1
       {"mid[18]",road_B[18].mid},   {"mid[19]",road_B[19].mid},       {"mid[20]",road_B[20].mid},
       {"mid[21]",road_B[21].mid},   {"mid[22]",road_B[22].mid},       {"mid[23]",road_B[23].mid}, 
       {"mid[24]",road_B[24].mid}*/
-      {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[5].mid},         {"mid[2]",road_B[10].mid},       {"mid[3]",road_B[15].mid},     {"mid[4]",road_B[20].mid},  
-      {"mid[5]",road_B[25].mid},       {"mid[6]",road_B[30].mid},     {"mid[7]",road_B[35].mid},         {"mid[8]",road_B[40].mid},     {"mid[9]",road_B[45].mid},  
+      //{"mid[0]",road_B[0].mid},     {"mid[1]",road_B[5].mid},         {"mid[2]",road_B[10].mid},       {"mid[3]",road_B[15].mid},     {"mid[4]",road_B[20].mid},  
+      //{"mid[5]",road_B[25].mid},       {"mid[6]",road_B[30].mid},     {"mid[7]",road_B[35].mid},         {"mid[8]",road_B[40].mid},     {"mid[9]",road_B[45].mid},  
     },
    // {
           

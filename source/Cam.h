@@ -77,11 +77,12 @@ extern u8 is_stopline;
 extern u8 cnt_zebra;
 extern u8 delay_zebra1, delay_zebra2;//1 for the first, should pass; 2 for the second, should stop
 extern int obstacleL[6],obstacleR[6];
-extern int curv_obstL, curv_obstR;
+extern int curv_obstL[3], curv_obstR[3];
 
 extern u8 obstacle;//0 for none, 1 for left, 2 for right;
 extern u8 last_obstacle;
-extern u8 delay_obst;
+extern u8 delay_obstL, delay_obstR;
+extern float left_ave, right_ave;
 
 extern float motor_L;
 extern float motor_R;

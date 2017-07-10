@@ -6,8 +6,8 @@
 u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
 //通用·赛道识别================================
-int MAX_SPEED=24;
-int MIN_SPEED=12;
+int MAX_SPEED=26;
+int MIN_SPEED=16;
 Road road_B[ROAD_SIZE];//由近及远存放
 float mid_ave;//road中点加权后的值
 float weight[4][10] ={ {0,0,0,0,0,0,0,0,0,0},
@@ -29,9 +29,10 @@ u8 cnt_zebra = 0;
 u8 delay_zebra1 = 0, delay_zebra2 = 0;
 u8 obstacle = 0;
 u8 last_obstacle = 0;
-int obstacleL[6],obstacleR[6];
-int curv_obstL = 0, curv_obstR = 0;
-u8 delay_obst = 0;
+int obstacleL[6], obstacleR[6];
+int curv_obstL[3], curv_obstR[3];
+u8 delay_obstL = 0, delay_obstR = 0;
+float left_ave = 0, right_ave = 0;
 
 int margin=30;//弯道判断条件
 //环岛处理========================================
@@ -232,14 +233,20 @@ u8 find_obstacle()
   {
     obstacleL[i] = 0;
     obstacleR[i] = CAM_WID;
-    for(int j = 0; j < CAM_WID/2+1; j++)
+    for(int j = 1; j < CAM_WID/2+1; j++)
     {
-      if(cam_buffer[60-i*8][j] < thr && cam_buffer[60-i*8][j+1] > thr)
+      if(cam_buffer[60-i*8][j-1] < thr 
+         && cam_buffer[60-i*8][j] < thr
+         && cam_buffer[60-8*i][j+1] > thr
+         && cam_buffer[60-i*8][j+2] > thr)
         obstacleL[i] = j;
     }
-    for(int j = CAM_WID; j > CAM_WID/2-1; j--)  
+    for(int j = CAM_WID-2; j > CAM_WID/2-1; j--)  
     {
-      if(cam_buffer[60-i*8][j] < thr && cam_buffer[60-i*8][j-1] > thr)
+      if(cam_buffer[60-i*8][j+1] < thr 
+         && cam_buffer[60-i*8][j] < thr
+         && cam_buffer[60-i*8][j-1] > thr
+         && cam_buffer[60-i*8][j-2] > thr)
         obstacleR[i] = j;
     }
   }
@@ -251,25 +258,25 @@ u8 find_obstacle()
   
   for(int i = 2; i >= 0; i--)
   {
-    curv_obstL = obstacleL[i+3] - obstacleL[i+2] - obstacleL[i+1] + obstacleL[i];
-    curv_obstR = obstacleR[i+3] - obstacleR[i+2] - obstacleR[i+1] + obstacleR[i];
+    curv_obstL[i] = obstacleL[i+3] - obstacleL[i+2] - obstacleL[i+1] + obstacleL[i];
+    curv_obstR[i] = obstacleR[i+3] - obstacleR[i+2] - obstacleR[i+1] + obstacleR[i];
     tmp_curvL = obstacleL[i+2]-2*obstacleL[i+1]+obstacleL[i];
     tmp_curvR = obstacleR[i+2]-2*obstacleR[i+1]+obstacleR[i];
-    if(   ((curv_obstL < -15 || curv_obstL > 12) 
-        || (curv_obstL < 4 && curv_obstL > -4 && (tmp_curvL > 10 || tmp_curvL < -10))) 
-        && (curv_obstR > -3 && curv_obstR < 3)
+    if(   ((curv_obstL[i] < -16 || curv_obstL[i] > 12) 
+        || (curv_obstL[i] < 3 && curv_obstL[i] > -3 && (tmp_curvL > 10 || tmp_curvL < -10))) 
+        && (curv_obstR[i] > -3 && curv_obstR[i] < 3)
         /*&& (tmp_curvR > -3 && tmp_curvR < 3)*/)
     {
       tmp_flag = 1;
-      delay_obst = 1;
+      delay_obstL = 5;
     }
-    else if(  ((curv_obstR > 15 || curv_obstR < -12) 
-             || (curv_obstR < 5 && curv_obstR > -5 && (tmp_curvR > 10 || tmp_curvR < -10))) 
-             && (curv_obstL < 3 && curv_obstL > -3)
+    else if(  ((curv_obstR[i] > 16 || curv_obstR[i] < -12) 
+             || (curv_obstR[i] < 3 && curv_obstR[i] > -3 && (tmp_curvR > 10 || tmp_curvR < -10))) 
+             && (curv_obstL[i] < 3 && curv_obstL[i] > -3)
              /*&& (tmp_curvL > -3 && tmp_curvL < 3)*/)
     {
       tmp_flag = 2;
-      delay_obst = 2;
+      delay_obstR = 5;
     }
     else if(tmp_flag == 0)
     {
@@ -924,16 +931,28 @@ void Cam_B(){
     for(int j=0;j<10;j++)
     {
       mid_ave += road_B[j*step].mid * weight[road_state][j];
+      left_ave += road_B[j*step].left * weight[road_state][j];
+      right_ave += road_B[j*step].right * weight[road_state][j];
       weight_sum += weight[road_state][j];
     }
-    mid_ave/=weight_sum;
+    mid_ave /= weight_sum;
+    left_ave /= weight_sum;
+    right_ave /= weight_sum;
     
     //=================================舵机的PD控制
-    static float err;
-    static float last_err;
+    static float err, err_left, err_right;
+    static float last_err, last_err_left, last_err_right;
     err = mid_ave  - CAM_WID / 2;
-
-    dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
+    err_left = left_ave - CAM_WID/2 - 6;
+    err_right = right_ave - CAM_WID/2 + 6;
+    
+    if(obstacle == 0)
+      dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
+    else if(obstacle == 1)
+      dir = (Dir_Kp+debug_dir.kp - 3) * err_right + (Dir_Kd+debug_dir.kd) * (err_right-last_err_right);
+    else if(obstacle == 2)
+      dir = (Dir_Kp+debug_dir.kp - 3) * err_left + (Dir_Kd+debug_dir.kd) * (err_left-last_err_left);
+    
     if(dir>0)
       dir*=1.3;//修正舵机左右不对称的问题//不可删
     last_err = err;
@@ -943,10 +962,11 @@ void Cam_B(){
     if(forced_turn==1) dir=-200;
     else if(forced_turn==2) dir=200;
     
-    if(obstacle == 1 || delay_obst == 1)
+    /*if(obstacle == 1 || delay_obstL > 0)
       dir += 90;
-    else if(obstacle == 2 || delay_obst == 2)
-      dir -= 70;
+    else if(obstacle == 2 || delay_obstR > 0)
+      dir -= 70;*/
+      
     
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
@@ -985,7 +1005,7 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      if(obstacle > 0 || delay_obst > 0)
+      if(obstacle > 0 || delay_obstL > 0 || delay_obstR > 0)
       {
         motor_L *= 0.7;
         motor_R *= 0.7;
