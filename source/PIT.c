@@ -37,10 +37,10 @@ int16 speed_set = 0;
 void PID_Init() 
 {
   L.kp = 5;
-  L.ki = 1;
+  L.ki = 2;
   L.kd = 0;
   R.kp = 5;
-  R.ki = 1;
+  R.ki = 2;
   R.kd = 0;
   
   L.lastErr=0;
@@ -65,11 +65,11 @@ void PWM(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)      //Ç°½øµÄPID
   L_err=left_speed+tacho0;
   R_err=right_speed-tacho1;
   L->errSum+=L_err;
-  if(L->errSum>500) L->errSum=500;
-  if(L->errSum<-500) L->errSum=-500;
+  if(L->errSum>300) L->errSum=300;
+  if(L->errSum<-300) L->errSum=-300;
   R->errSum+=R_err;
-  if(R->errSum>500) R->errSum=500;
-  if(R->errSum<-500)R->errSum=-500;
+  if(R->errSum>300) R->errSum=300;
+  if(R->errSum<-300)R->errSum=-300;
   L_pwm=(L_err*L->kp + L->errSum*L->ki + (L_err-L->lastErr)*L->kd);
   R_pwm=(R_err*R->kp + R->errSum*R->ki + (R_err-R->lastErr)*R->kd);
   L->lastErr=L_err;
