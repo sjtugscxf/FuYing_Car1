@@ -446,14 +446,14 @@ void Cam_B(){
    if(err<6&&err>-6) dir = 3*err;
    else
    {
-     if(err>0) dir = (int)(0.4 * err * err);
-     else dir = -(int)(0.4 * err * err);
+     if(err>0) dir = (int)(0.35 * err * err);
+     else dir = -(int)(0.35 * err * err);
    }
       //  if(dir>0)
    //   dir*=1.2;//修正舵机左右不对称的问题//不可删
     last_err = err;
     
-    dir=constrainInt(-230,230,dir);
+    dir=constrainInt(-210,210,dir);
     //斑马线：
     if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
       dir = 0;
@@ -496,6 +496,7 @@ void Cam_B(){
     
     else if(car_state==2 ){
       //分段线性控速
+      /*
       if(abs(dir)<50 ){//&& valid_row>valid_row_thr
         motor_L=motor_R=max_speed;
       }
@@ -517,8 +518,23 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      if(is_stopline == 4)
-        PWM(0, 0, &L, &R);
+      */
+      
+      if(abs(dir)<50 ){//&& valid_row>valid_row_thr
+        motor_L=motor_R=25;
+      }
+      else if(dir>49)
+      {
+        motor_L = 12;
+        motor_R = 15;
+      }
+      else
+      {
+        motor_L = 15;
+        motor_R = 12;
+      }
+      
+      if(is_stopline == 4) PWM(0, 0, &L, &R);
       else PWM(motor_L, motor_R, &L, &R);               //后轮速度
     }
    else
