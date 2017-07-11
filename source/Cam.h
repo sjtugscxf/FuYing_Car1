@@ -34,7 +34,7 @@ void Cam_Algorithm();
 void Cam_Init();
 
 //宏定义======================
-#define CAM_WID 128//摄像头有效宽度//与摄像头安放位置有关//正常值128
+#define CAM_WID 136//摄像头有效宽度//与摄像头安放位置有关//正常值128
 #define Dir_Kp 8    //舵机比例控制参数
 #define Dir_Kd 4.25  //舵机微分控制参数
 #define thr 70//黑白阈值，目前无需调

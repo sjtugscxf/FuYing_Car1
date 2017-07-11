@@ -20,8 +20,11 @@ float weight[6][10] ={
 //{1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29}
 //{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}
 };//本来是为直、弯、环岛三个路况分别设置的权重，低速下不用考虑，高速可能会有细微区别。
-int MAX_SPEED=30;
-int MIN_SPEED=14;
+int MAX_SPEED=20;
+int MIN_SPEED=15;
+
+int island_speed = 7;
+
 int road_B_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定
                   //CAR1对应路宽 5 -> 直道50+ or 弯道70+ or 入环岛或十字110+ or 出环岛可能80~100+ 
                   //目前CAR1--10  CAR2--0
@@ -154,6 +157,7 @@ void Cam_B(){
     //优先级：停车线 环岛 十字 弯道 直道
     //但是十字可以锁定
     //判断停车线-----------------------------------------------------//最终版本？
+    /*
     if(is_stopline == 0 && is_stop_line(45) == 1)
     {
       is_stopline++;
@@ -187,6 +191,7 @@ void Cam_B(){
       flag_ignore=0;
       ignore_time=0;
     }
+    */
     
     //区分环岛与十字的延长线法————————————————————
     if(state_set==0 && flag_ignore==0){     //若没有检测到环岛，且不在十字、终点状态下，则进行拐点（jump）检测，如下：//太精细的计算不适合，所以改成一个简单的
@@ -306,9 +311,12 @@ void Cam_B(){
         max_speed=MAX_SPEED;
         min_speed=MIN_SPEED;
         break;
-      case 3:   //环岛
-        min_speed=MIN_SPEED;
-        max_speed=min_speed+1;
+      case 3:   //环岛island_speed
+        //min_speed=MIN_SPEED;
+        //max_speed=min_speed+1;
+        min_speed=island_speed;
+        max_speed=island_speed+1;
+        Bell_Request(5);
         switch(roundabout_state)
         {
         case 0://非环岛，用于置零，貌似无用
@@ -431,7 +439,7 @@ void Cam_B(){
         switch(cross_state){
         case no_cross://无处理
           break;
-          
+          /*
         case cross_detect:
           cross_cnt++;
           if(car_type==leader && overtake_state==in_overtake){
@@ -485,12 +493,14 @@ void Cam_B(){
           */
           //处理完成：
           //转过270°且road_B[0].width<128?后，出cross_state//此条件需要改！！！！！！！！！！！
+          /*
           if(1){
             state_set=0;
             cross_state=no_cross;
             bt_ok=0;
           }
           break;
+          */
         default:break;
         }
         break;
@@ -519,6 +529,7 @@ void Cam_B(){
     
     //特殊处理如下：
     //十字：
+    /*
     if(road_state==5){
       //控向
       if (cross_turn==2){
@@ -531,13 +542,14 @@ void Cam_B(){
         dir = 75;
       }
     }
+    */
     //终点线
-    if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
-      dir = 0;
+    //if(is_stopline > 0 && (delay_zebra1 > 0 || delay_zebra2 > 0))
+    //  dir = 0;
     
     //舵机输出与手动停车：
     if(car_state!=0){
-      dir=constrainInt(-230,230,dir);
+      dir=constrainInt(-170,170,dir);
       Servo_Output(dir);
     }
     else   
@@ -549,14 +561,17 @@ void Cam_B(){
     //PWM以dir为参考，前期分级控制弯道速度；中期分段线性控速；后期找到合适参数的时候，再进行拟合——PWM关于dir的函数
     min_speed=MIN_SPEED;
     float range=constrain(0,50,max_speed-min_speed);//速度范围大小 
+    
+    /*
     if(flag_stop==1)
      PWM(0,0,&L,&R);
     
     else if (cross_turn==1){
       PWMne(10, 10, &L, &R);
     }
-    
-    else if(car_state==2 ){
+    */
+    //else 
+      if(car_state==2 ){
       //分段线性控速
       if(abs(dir)<50 ){//&& valid_row>valid_row_thr
         motor_L=motor_R=max_speed;
@@ -579,9 +594,10 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
-      if(is_stopline == 4)
-        PWM(0, 0, &L, &R);
-      else PWM(motor_L, motor_R, &L, &R);               //后轮速度
+      //if(is_stopline == 4)
+      //  PWM(0, 0, &L, &R);
+      //else 
+      PWM(motor_L, motor_R, &L, &R);               //后轮速度
     }
    else
    {
