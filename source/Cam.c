@@ -454,13 +454,15 @@ void Cam_B(){
     static float last_err;
     err = mid_ave  - CAM_WID / 2;
 
-    dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
-    if(dir>0)
-      dir*=1.5;//修正舵机左右不对称的问题//不可删
-    else dir*=1.2;
+    //if(err<6 && err>-6) dir = (Dir_Kp2+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
+    //else  
+      dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)
+   // if(dir>0)
+   //   dir*=1.4;//修正舵机左右不对称的问题//不可删
+   // else dir*=1.0;
     last_err = err;
     
-    dir=constrainInt(-220,220,dir);
+    dir=constrainInt(-190,190,dir);
     if(car_state!=0)
       Servo_Output(dir);
     else   
