@@ -2923,6 +2923,12 @@
     <file>
       <name>$PROJ_DIR$\source\UI_Operation.h</name>
     </file>
+    <file>
+      <name>$PROJ_DIR$\source\Wave.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\source\Wave.h</name>
+    </file>
   </group>
   <group>
     <name>lib</name>

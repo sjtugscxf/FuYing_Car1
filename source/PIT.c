@@ -142,6 +142,9 @@ void PIT1_IRQHandler(){
   if(wave_lost_cnt<20) wave_lost_cnt++;
   if(wave_lost_cnt == 20) waveState = LOST;
   
+  if(wave_abslost_cnt<10) wave_abslost_cnt++;
+  if(wave_abslost_cnt == 10) waveState = ABSLOST;
+  
   //------------ Other -------------
   
   pit1_time_tmp = pit1_time_tmp - PIT2_VAL();
@@ -166,7 +169,7 @@ void PIT0_IRQHandler(){
   
   pit0_time = PIT2_VAL();
     
-  battery = Battery();
+  //battery = Battery();
   
   
   
