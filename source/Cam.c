@@ -549,7 +549,7 @@ void Cam_B(){
     
     //舵机输出与手动停车：
     if(car_state!=0){
-      dir=constrainInt(-170,170,dir);
+      dir=constrainInt(-200,200,dir);
       Servo_Output(dir);
     }
     else   
