@@ -33,7 +33,7 @@ void CCD2_CLK(u8 x);
 
 
 // =======  Function Realization ======
-
+/*
 void CCD1_GetLine(U8 * ccd_line)
 {
   u8 i;
@@ -130,15 +130,15 @@ void CCD2_GetLine(U8 * ccd_line)
   
   CCD2_CLK(0);  //CLK = 0.
 }
-
+*/
   //  INIT 
 void CCD_Init(){
   
-  PORTB->PCR[20] |= PORT_PCR_MUX(1);    // 2 SI
-  PORTB->PCR[21] |= PORT_PCR_MUX(1);    // 1 SI
-  PORTB->PCR[22] |= PORT_PCR_MUX(1);    // 2 CLK
-  PORTB->PCR[23] |= PORT_PCR_MUX(1);    // 1 CLK
-  PTB->PDDR |= (0xf<<20);
+  //PORTB->PCR[20] |= PORT_PCR_MUX(1);    // 2 SI
+  //PORTB->PCR[21] |= PORT_PCR_MUX(1);    // 1 SI
+  //PORTB->PCR[22] |= PORT_PCR_MUX(1);    // 2 CLK
+  //PORTB->PCR[23] |= PORT_PCR_MUX(1);    // 1 CLK
+  //PTB->PDDR |= (0xf<<20);
   
   SIM->SCGC6 |= SIM_SCGC6_ADC0_MASK;//ADC0 Clock Enable
   /*

@@ -11,7 +11,7 @@ License : MIT
 // === Receive ISR ===
 void UART3_IRQHandler(void){
    uint8 tmp = UART_GetChar();
-  /*
+   /*
    if (tmp == 'a'){
      remote_state = 2;
      UART_SendString("turn left");//
@@ -19,71 +19,15 @@ void UART3_IRQHandler(void){
      remote_state = 3;
      UART_SendString("turn right");//
    }else if (tmp == 'w'){
-     remote_state = 1;
-     UART_SendString("go ahead");
+     //remote_state = 1;
+     //UART_SendString("go ahead");
+    // prepare_overtake = 1;
    }else if (tmp == 's'){
-     remote_state = 0;
-     UART_SendString("stop");
+     //remote_state = 0;
+     //UART_SendString("stop");
+    //  prepare_overtake = 0;
    }
    */
-  /* if(tmp=='0')
-     remote_state=bt_no;
-   else if(tmp=='1')
-     remote_state=bt_prepare;
-   else if(tmp=='2')
-     remote_state=bt_start;
-   else if(tmp=='3')
-     remote_state=bt_finish;
-   else if(tmp=='4')
-     remote_state=bt_forbid;
-   */
-  switch(car_type){
-  case leader:
-    switch(tmp){
-    case 'A':
-      bt_ok=1;
-      overtake_state=in_overtake;
-      break;
-    case 'b':
-      car_type=follower;
-      overtake_state=no_overtake;
-      UART_SendChar('B');
-      break;
-    case 'C':
-      bt_ok=1;
-      //bt_stop=1;其实不需要反馈就可以停车，如果想要缩短两车到终点的时间差，则需要利用这个反馈！！！！！！！！
-    }
-    break;
-    
-  case follower:
-    switch(tmp){
-    case 'a':
-      if(bt_ok==0){            //只有后车完成了之前的state才可以接受新的超车请求
-        overtake_state=in_overtake;
-        UART_SendChar('A');
-        bt_ok=1;
-      }
-    case 'B':
-      car_type==leader;
-      overtake_state=no_overtake;
-      break;
-    case 'c':
-      bt_ok=1;
-      bt_stop=1;
-      UART_SendChar('C');
-      break;
-    default:break;
-    }
-    break;
-    
-  default:break;
-  /*
-   else if(tmp=='b')
-     overtake_state=0;
-   else if(tmp=='c')
-     bt_stop=1;
-   */
-  }
 }
 
 // ======== APIs ======

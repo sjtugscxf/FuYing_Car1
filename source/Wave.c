@@ -6,50 +6,32 @@
 U32 wavetimef;
 U32 wavetime;
 U32 wavetimeus;
-U32 distance;
-U32 distance_tmp;
-U32 distance_last;
+int distance;
+int distance_tmp;
+int distance_last;
+int distance_buffer[5];
+int distance_ave;
+int distance_diff;
+int distance_sum;
 
-U32 trigtimef;
-U32 trigtime;
-U32 trigtimeus;
-//---- LOCAL ---
+WaveState waveState;
+uint8 wave_lost_cnt = 0;
 
-// ===== Function Declaration ===== ( Local ) ( No need for users to use)
-
-  // -- Basic Drivers --
-
-  // --  Hardware Interface --
-
-// =======  Function Realization ======
-
-
-void GetDistance()
-{
-  /*  PTC->PSOR |= 1<<16;   //高电位
-    trigtimef=PIT2_VAL();
-    for (int i=0;i<1700;++i)
-    {
-      
-    }
-    trigtime=trigtimef-PIT2_VAL();
-    trigtimeus = trigtime / (g_bus_clock/1000000); //1us
-    PTC->PCOR |= 1<<16;   //低电位*/
+void StartUltrasound(u8 x){
+  if(x)
+    PTC->PSOR |= 1<<1;
+  else
+    PTC->PCOR |= 1<<1;
 }
 
 void Wave_Init()
 {
-  /*  
-  PORTC->PCR[17] |= PORT_PCR_MUX(1) |PORT_PCR_PE_MASK | PORT_PCR_PS_MASK | PORT_PCR_IRQC(11);    // 1 SI     超声波芯片输入  0
-    PORTC->PCR[16] |= PORT_PCR_MUX(1);    // 1 CLK   超声波芯片输出  1
-    PTC->PDDR |= (0x1<<16);
-    NVIC_EnableIRQ(PORTC_IRQn);
-    NVIC_SetPriority(PORTC_IRQn, NVIC_EncodePriority(NVIC_GROUP, 2, 1));
-  */
+  PORTC->PCR[0] |= PORT_PCR_MUX(1) |PORT_PCR_PE_MASK | PORT_PCR_PS_MASK | PORT_PCR_IRQC(11);    // CCD2AO接口用作输入，超声波接收
+  PORTC->PCR[1] |= PORT_PCR_MUX(1);    // CCD1AO接口用作输出，超声波发送
+  PTC->PDDR |= (0x1<<1);
+  NVIC_EnableIRQ(PORTC_IRQn);
+  NVIC_SetPriority(PORTC_IRQn, NVIC_EncodePriority(NVIC_GROUP, 2, 1)); //PORTC中断服务程序在cam.c中
+  waveState = LOST;
 }
 
-// ======= Basic Drivers ======
 
-
-   
-// ===== Hardware Interface =====
