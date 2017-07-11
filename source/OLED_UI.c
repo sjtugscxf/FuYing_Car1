@@ -59,10 +59,16 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
-      {"is_stop?",is_stopline},{"car_type",car_type},
-  {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
+      //{"motor_L",motor_L},{"motor_R",motor_R},
+  {"road_state",road_state},
+//  {"obstacle_type",obstacle_type},{"obstacle_pos",obstacle_pos},
+  {"round_state",roundabout_state},//{"round_choice",roundabout_choice},
+  {"left3",left3},
+  {"right3",right3},
   {"battery",battery},  {"valid_row",valid_row}, 
-  {"hole_line",road_hole_row},    {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
+  {"start_row",start_row},{"last_row",last_row},
+   {"is_stop?",is_stopline},{"car_type",car_type},
+  {"hole_line",road_hole_row},    {"width[hole]",road_B[(60-road_hole_row)/CAM_STEP].width},
   
   {"sum_l",suml},{"sum_r",sumr},
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
@@ -73,7 +79,7 @@ void displayParameters()//menu==1
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
       {"tacho0",tacho0},{"tacho1",tacho1},
-      {"motor_L",motor_L},{"motor_R",motor_R},
+      
      // {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
     },
     //==============
