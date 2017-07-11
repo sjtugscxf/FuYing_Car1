@@ -118,8 +118,8 @@ void PIT1_IRQHandler(){
   UI_SystemInfo();
   
   //===========
-  time_cnt++;
-  time_cnt%=5000;       //100s上限
+  //time_cnt++;
+  //time_cnt%=5000;       //100s上限
   if(delay_zebra1 > 0)
     delay_zebra1--;
   if(delay_zebra2 > 0)
@@ -134,6 +134,10 @@ void PIT1_IRQHandler(){
     right_time--;
   if(wait_time>0)
     wait_time--;
+  if (time_cnt>0)
+    time_cnt--;
+  if (time_cnt1>0)
+    time_cnt1--;
   
   if(wave_lost_cnt<20) wave_lost_cnt++;
   if(wave_lost_cnt == 20) waveState = LOST;
