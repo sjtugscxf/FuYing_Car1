@@ -52,8 +52,8 @@ void PID_Init()
 
 void PWM(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)      //前进的PID控制
 {  
-  L_err=left_speed+tacho0;
-  R_err=right_speed-tacho1;
+  L_err=left_speed-tacho0;
+  R_err=right_speed+tacho1;
   L->errSum+=L_err;
   if(L->errSum>300) L->errSum=300;
   if(L->errSum<-300) L->errSum=-300;
