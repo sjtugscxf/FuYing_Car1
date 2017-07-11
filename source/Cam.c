@@ -90,7 +90,7 @@ int right_time=60;
 int left_time=2000;
 int cross_end=0; //判断十字是否结束
 int flag_wide=0;
-
+int cross_overtake_cnt=0;
 
 
 //观察·速控========================================================
@@ -188,10 +188,8 @@ void Cam_B(){
       ignore_time=0;
     }
     
-    //区分环岛与十字的延长线法————————————————————
-    if(state_set==0 && flag_ignore==0){     //若没有检测到环岛，且不在十字、终点状态下，则进行拐点（jump）检测，如下：//太精细的计算不适合，所以改成一个简单的
+    //使跳变点jump始终检测：
       int cnt=0;
-      int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
       flag_left_jump=0,flag_right_jump=0;
       for(cnt=0;cnt<cnt_thr;cnt++){     //在road_B[0]~[39]之间检查jump
         if(flag_left_jump==0){
@@ -214,6 +212,10 @@ void Cam_B(){
        if(flag_left_jump==1&&flag_right_jump==1)//检测到两个拐点       
          break;
       }
+    
+    //区分环岛与十字的延长线法————————————————————
+    if(state_set==0 && flag_ignore==0){     //若没有检测到环岛，且不在十字、终点状态下，则进行拐点（jump）检测，如下：//太精细的计算不适合，所以改成一个简单的
+      
       if(flag_left_jump==1&&flag_right_jump==1){//若检测到两个拐点，则判断是环岛还是十字，如下：(同时要求两个拐点不能太远，否则没用)
         //比例：suml 或 sumr / cnt*CAM_STEP
         int cnt_black_row=0;//记录黑行个数
@@ -319,12 +321,7 @@ void Cam_B(){
           break;
         case 1://检测到环岛
           if(roundabout_choice==0){
-            //暂时用右转代替最短路径（注意：小环岛最短路径影响不大，大环岛能否看到出岛位置则是个问题）
-            //拨码控制方案：
-            //roundabout_choice=SW1()+1;
-            // 最短路径识别方案:
-            /*
-            */
+            roundabout_choice=car_type;
           }
         //  if(isWider(0,120)){//如果路过于宽，认为出现分叉，开始转弯     新车摄像头可能不一样
           if(road_B[0].width>120){
@@ -358,7 +355,7 @@ void Cam_B(){
              //发通讯：
             if(bt_ok==0)
               UART_SendChar('a'); //告诉后车你可以超车了
-            //停车：
+            //停车：       //改！
             if(time_cnt>=300)
               flag_stop=1;
             else flag_stop=0;
@@ -366,6 +363,7 @@ void Cam_B(){
           else if(car_type==follower){
             //只有后车才能行驶
             flag_stop=0;
+            bt_ok=0;
             //三重出岛识别条件，绝对能出岛！
             if(isWider(road_B_near,100)){
               roundabout_state=4;
@@ -422,10 +420,29 @@ void Cam_B(){
         break;
         
       case 4://障碍
+        if(obstacle_state==obstacle_go && obstacle_tye==obstacle_cross){        //不确定
+          int left_max=0,right_min=CAM_WID;
+          for(int i=0;i<30;i++){
+            if(road_B[i].left>left_max) left_max=road_B[i].left;
+            if(road_B[i].right<right_min) right_min=road_B[i].right;
+          }
+          for(int i=1;i<30;i++){
+            road_B[i].left=left_max;
+            road_B[i].right=right_min;
+            road_B[i].mid=(left_max+right_min)/2;
+          }
+          
+          if(overtake_state=no_overtake){
+            state_set=0;
+            obstacle_state=obstacle_no;
+            obstacke_type=no_obstacle;
+          }
+            
+        }
         break;
         
       case 5://十字
-        if(car_type==leader && bt_ok==0)
+        if(car_type==leader && bt_ok==0 && cross_overtake_cnt==0)
             UART_SendChar('a');//告诉后车可以超车
         
         switch(cross_state){
@@ -438,10 +455,16 @@ void Cam_B(){
             cross_cnt=0;
             cross_state=cross_stop;
           }
-          else if(car_type==follower || cross_cnt>bt_delay){                          //后车状态或者非超车（通讯未完成）状态，转为穿越十字状态
+          else if(car_type==follower){                          //后车状态或者非超车（通讯未完成）状态，转为穿越十字状态
             cross_cnt=0;
             cross_state=cross_go;
           }
+          else if(car_type==leader && cross_cnt>bt_delay){
+            cross_cnt=0;
+            cross_state=cross_go;
+            for(int i=0;i<10;i++){
+              UART_SendChar('h');
+            }
           break;
           
         case cross_stop:        //此时必定是前车状态
@@ -466,7 +489,7 @@ void Cam_B(){
           
         case cross_back:        //此时必定是后车状态，倒车
           cross_cnt++;
-          if (cross_cnt < left_time){
+          if (cross_cnt < left_time || (flag_jump_left==1 && flag_jump_right==1 && cross_cnt>left_time_min)){   //最后改成PIT
             flag_stop=0;
             cross_turn=1;
           }
