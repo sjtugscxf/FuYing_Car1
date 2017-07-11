@@ -1,6 +1,5 @@
 #ifndef CAM_H
 #define CAM_H
-
 // ===== Settings =====
 // the camera has about 300 rows and 400 cols ,
 // but we can not handle that much ,
@@ -35,9 +34,9 @@ void Cam_Init();
 
 //宏定义======================
 #define CAM_WID 128//摄像头有效宽度//与摄像头安放位置有关//正常值128
-#define Dir_Kp 8    //舵机比例控制参数
-#define Dir_Kd 4.25  //舵机微分控制参数
-#define thr 70//黑白阈值，目前无需调
+#define Dir_Kp 4.4//0.666    //舵机比例控制参数  8               //6  6.666
+#define Dir_Kd 32  //舵机微分控制参数     //6    12抖得很厉害    26.666
+#define thr 65//黑白阈值，目前无需调      //70    //新摄像头需要调
 #define ROAD_SIZE 50 //利用的摄像头数据行数
 #define WEIGHT_SIZE 10 //实际加权并控制舵机的行数
 //类型定义=======================================
@@ -53,12 +52,14 @@ enum road_state {straight, curve, roundabout, obstacle, cross}; // 前方道路状态
 enum overtake_state {no_overtake, in_overtake};     // 超车状态
 enum car_type {leader=1, follower=2}; // 前后车标志
 enum car_state {stop, test, normal_drive};   // 智能车状态
-enum remote_state {bt_no, bt_prepare, bt_start, bt_finish, bt_forbid};  // 蓝牙通讯
+enum remote_state {bt_no, bt_prepare, bt_start, bt_finish, bt_forbid, bt_stop, bt_adjust, bt_accelerate};  // 蓝牙通讯
 enum roundabout_state {round_no, round_prepare, round_enter, round_in, round_exit}; // 环岛状态
 enum roundabout_choice {round_choice_no, round_left, round_right, round_both}; // 环岛内的方向选择
 enum cross_state {no_cross, cross_detect, cross_stop, cross_back, cross_go};//十字状态
 enum cross_turn {cross_no, cross_left, cross_right, cross_close}; // 十字内的方向选择
-
+enum obstacle_state {obstacle_no, obstacle_pre, obstacle_go};
+enum obstacle_type {no_obstacle, obstacle_good, obstacle_bad, obstacle_cross};//障碍种类
+enum obstacle_pos {obstacle_right, obstacle_left};//障碍物位置
 //函数定义======================================
 void Cam_B_Init();//初始化Cam_B
 float constrain(float lowerBoundary, float upperBoundary, float input);//控制上下限的函数
@@ -70,7 +71,6 @@ bool isWider(int row,int road_width_thr);//检测路宽
 //================================================================
 //extern 声明：
 //特别声明（两车不同的部分）========================
-extern enum car_type car_type;//前后车标志 1=前车 2=后车
 extern float weight[6][10];
 extern int MAX_SPEED;
 extern int MIN_SPEED;
@@ -86,12 +86,9 @@ extern int valid_row;//与有效行相关，后期用来速控
 extern int valid_row_thr;//有效行阈值，区分直道和大弯道
 extern enum car_state car_state;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 extern enum road_state road_state;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
-                  //2 状态下减速
-//双车======================================
+                  //2 状态下减速//双车======================================
+extern enum car_type car_type;//前后车标志 1=前车 2=后车
 extern bool flag_stop;
-extern bool bt_stop;
-extern bool bt_ok;
-extern int bt_delay;
 extern enum overtake_state overtake_state;//超车状态      0=无超车     1=主动超车（保持速度或者加速）          2=被超车（减速或停车） 
 extern enum remote_state remote_state;//蓝牙通讯   
 //0=各自正常行驶   
@@ -119,7 +116,7 @@ extern u8 cnt_zebra;
 extern u8 delay_zebra1, delay_zebra2;
 
 //十字弯处理==============
-extern enum cross_state cross_state;
+
 extern int left3;
 extern int right3;
 extern int flag_cross; //十字的判断条件
@@ -131,9 +128,15 @@ extern int right_time;//——————————————
 extern int left_time;//——————————————
 extern int cross_end; //判断十字是否结束
 extern int flag_wide;
+extern int wait_time;
 
-
-
+//障碍处理==================
+extern enum obstacle_type obstacle_type;
+extern enum obstacle_state obstacle_state;
+extern enum obstacle_pos obstacle_pos;
+extern int start_row;
+extern int last_row;
+extern int obstacle_time_cnt;
 //观察·速控========================================================
 extern float motor_L;//=MIN_SPEED;
 extern float motor_R;//=MIN_SPEED;
