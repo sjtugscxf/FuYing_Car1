@@ -59,14 +59,18 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
-     
-  {"road_state",road_state},    {"round_state",roundabout_state},               {"round_choice",roundabout_choice},
-  {"is_stop",is_stopline},      {"car_type",car_type},
-  {"bt_stop",bt_stop},          {"bt_ok",bt_ok},
-  {"battery",battery},          {"valid_row",valid_row}, 
-  {"hole_line",road_hole_row},  {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
+      //{"motor_L",motor_L},{"motor_R",motor_R},
+  {"road_state",road_state},
+//  {"obstacle_type",obstacle_type},{"obstacle_pos",obstacle_pos},
+  {"round_state",roundabout_state},//{"round_choice",roundabout_choice},
+  {"left3",left3},
+  {"right3",right3},
+  {"battery",battery},  {"valid_row",valid_row}, 
+  {"start_row",start_row},{"last_row",last_row},
+   {"is_stop?",is_stopline},{"car_type",car_type},
+  {"hole_line",road_hole_row},    {"width[hole]",road_B[(60-road_hole_row)/CAM_STEP].width},
   
-  {"sum_l",suml},               {"sum_r",sumr},
+  {"sum_l",suml},{"sum_r",sumr},
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
   {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
@@ -75,7 +79,7 @@ void displayParameters()//menu==1
       {"servo",ServoOut},       {"mid_ave",mid_ave},       
       {"car_state",car_state},
       {"tacho0",tacho0},{"tacho1",tacho1},
-      {"motor_L",motor_L},{"motor_R",motor_R},
+      
      // {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
     },
     //==============
@@ -316,7 +320,7 @@ void drawJump()
 {
   int row, col, i, j;
   int cnt=(60-jump[0][1])/CAM_STEP;
-  int left_now, right_now;
+  //int left_now, right_now;
   u8 buf[1024];
   u8 *p = buf;
     
@@ -329,8 +333,8 @@ void drawJump()
           j=(60-(row-i))/CAM_STEP;//road_B的下标
          // left_now=jump[0][0]+(jump[0][1]-(row-i))*suml/(60-jump[0][1]);
          // right_now=jump[1][0]+(jump[1][1]-(row-i))*sumr/(60-jump[1][1]);//感觉这个更对
-          left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
-          right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
+          //left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
+          //right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
          // if (col==left_now || col==right_now)//isTarget(cam_buffer[row-i][col]))
           if(col==jump[0][0] || col==jump[1][0])
             tmp |= 0x01;

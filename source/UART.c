@@ -41,19 +41,13 @@ void UART3_IRQHandler(void){
   case leader:
     switch(tmp){
     case 'A':
-      if(bt_ok==0){
-        bt_ok=1;
-        overtake_state=in_overtake;
-      }
+      bt_ok=1;
+      overtake_state=in_overtake;
       break;
     case 'b':
-      if(overtake_state==in_overtake){
-        car_type=follower;
-        overtake_state=no_overtake;
-        for(int i=0;i<10;i++){
-          UART_SendChar('B');
-        }
-      }
+      car_type=follower;
+      overtake_state=no_overtake;
+      UART_SendChar('B');
       break;
     case 'C':
       bt_ok=1;
@@ -66,30 +60,18 @@ void UART3_IRQHandler(void){
     case 'a':
       if(bt_ok==0){            //只有后车完成了之前的state才可以接受新的超车请求
         overtake_state=in_overtake;
-        for(int i=0;i<10;i++){
-          UART_SendChar('A');
-        }
+        UART_SendChar('A');
         bt_ok=1;
       }
     case 'B':
-      if(bt_ok==0){
-        bt_ok=1;
-        car_type==leader;
-        overtake_state=no_overtake;
-      }
+      car_type=leader;
+      overtake_state=no_overtake;
       break;
     case 'c':
       bt_ok=1;
-      bt_stop=1;
+      //bt_stop=1;
       UART_SendChar('C');
       break;
-    case 'g':
-      state_set=1;
-      road_state=4;
-      obstacle_state=obstacle_go;
-      obstacle_state=obstacle_cross;
-    case 'h':
-      overtake_state=no_overtake;
     default:break;
     }
     break;

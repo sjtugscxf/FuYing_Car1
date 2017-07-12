@@ -8,7 +8,7 @@
   // PIT1 is used for UI (Refreshing Loop)
   // Its period determined the refresh rate.
   // Suggest 20000 ~ 40000
-#define PIT1_PERIOD_US (u32)20000
+#define PIT1_PERIOD_US (u32)20000               //50=1s
 
   // PIT0 is used for Control
   // Its period determined the control rate.
