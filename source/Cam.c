@@ -782,7 +782,7 @@ void Cam_B(){
     
     //================================对十行mid加权：
     float weight_sum=0;
-    int step=2;
+    int step=1;
     for(int j=0;j<10;j++)
     {
       mid_ave += road_B[j*step].mid * weight[road_state][j];
