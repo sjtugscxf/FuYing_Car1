@@ -23,3 +23,4 @@
 #include "Wave.h"
 
 #include "math.h"
+#include "Flash.h"

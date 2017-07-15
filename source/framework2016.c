@@ -30,6 +30,9 @@ void main (void)
   Servo_Init();
   PID_Init(); 
   Cam_B_Init();//≥ı ºªØCam_B
+  Wave_Init();
+  StartUltrasound(1);
+  Flash_Init();
   
 #if (CAR_TYPE==0)   // Magnet and Balance
   
@@ -39,12 +42,12 @@ void main (void)
   
 #elif (CAR_TYPE==1)     // CCD
   
-  CCD_Init();
+  //CCD_Init();
   
 #else               // Camera
   
   Cam_Init();
-  CCD_Init();
+  //CCD_Init();
 #endif
   
   //---  Press Key 1 to Continue ---
@@ -53,6 +56,8 @@ void main (void)
   Oled_Clear();
 
   __enable_irq();
+  
+  while (time_us < 2000000);
   
   // --- System Initiated ---   
   while(1)

@@ -11,7 +11,7 @@ License : MIT
 // === Receive ISR ===
 void UART3_IRQHandler(void){
    uint8 tmp = UART_GetChar();
-   if (tmp == 'a'){
+  /* if (tmp == 'a'){
      remote_state = 2;
      UART_SendString("turn left");//
    }else if (tmp == 'd'){
@@ -23,6 +23,15 @@ void UART3_IRQHandler(void){
    }else if (tmp == 's'){
      remote_state = 0;
      UART_SendString("stop");
+   }*/
+   if(tmp=='a' && car_type==0){
+     car_type=1;
+   }
+   if(tmp=='b'){
+     cnt_speed=0;
+   }
+   if(tmp=='c'){
+     bt_stop=1;
    }
 }
 
