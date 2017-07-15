@@ -26,14 +26,18 @@ U16 data_initial[DATA_NUM]={
 //----------------------
 void Flash_Write(U16 sector){
   U32 addr = ADDR + sector*SECTOR_SIZE;
-  NVIC_DisableIRQ(PIT0_IRQn);
-  NVIC_DisableIRQ(PORTC_IRQn);
-  NVIC_DisableIRQ(UART3_RX_TX_IRQn);
+  //NVIC_DisableIRQ(PIT0_IRQn);
+  //NVIC_DisableIRQ(PORTC_IRQn);
+  //NVIC_DisableIRQ(UART3_RX_TX_IRQn);
+  __disable_irq();
+  
   Flash_Erase(sector);
   Flash_Program(sector,DATA_NUM,data);
-  NVIC_EnableIRQ(PIT0_IRQn);
-  NVIC_EnableIRQ(PORTC_IRQn);
-  NVIC_EnableIRQ(UART3_RX_TX_IRQn);
+  
+  __enable_irq();
+  //NVIC_EnableIRQ(PIT0_IRQn);
+  //NVIC_EnableIRQ(PORTC_IRQn);
+  //NVIC_EnableIRQ(UART3_RX_TX_IRQn);
 }
 
 void Flash_Data_Update(void){

@@ -1,63 +1,78 @@
-
+//后车car2
 #include "includes.h"
-
+int stop_delay=0;
+bool stop_delay_flag=0;
 // ====== Variables ======
 // ---- Global ----
 u8 cam_buffer_safe[BLACK_WIDTH*2];
 u8 cam_buffer[IMG_ROWS][IMG_COLS+BLACK_WIDTH];   //64*155，把黑的部分舍去是59*128
-//特别声明（两车不同的部分）=================================================
+//通用·赛道识别================================
+int MAX_SPEED = 21;
+int MIN_SPEED = 16;
+float chasu=0.038;
+int lap=0;
+int cnt_tmp=0;
+int cnt_speed=0;
+int cnt_speed2=0;
+float Dir_Kp=4.4;
+float Dir_Kp2=4.4;
+float Dir_Kd=32;
+float Dir_Kd2=32;
+int differ=0;// 记录黑白跳变点
+bool stopper=0;
+Road road_B[ROAD_SIZE];//由近及远存放
+float mid_ave;//road中点加权后的值
 float weight[4][10] ={ {0,0,0,0,0,0,0,0,0,0},
-{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},
-{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454},
-{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}
+{0.500,0.800,1.118,1.454, 2.296, 3.744, 5.304,      6.000, 5.304,3.744},
+{0.500,0.800,1.118,1.454, 2.296, 3.744, 5.304,      6.000, 5.304,3.744},
+{0.500,0.800,1.118,1.454, 2.296, 3.744, 5.304,      6.000, 5.304,3.744}
 //{1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29},
                         //{1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29},
                         //{1.00,1.03,1.14,1.54,2.56,               4.29,6.16,7.00,6.16,4.29}
                         //{1.118, 1.454, 2.296, 3.744, 5.304,      6.000, 5.304, 3.744, 2.296, 1.454}
                       };//本来是为直、弯、环岛三个路况分别设置的权重，低速下不用考虑，高速可能会有细微区别。
-int MAX_SPEED=24;
-int MIN_SPEED=12;
-int road_B_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定，待调参………………
-                  //对应路宽 5 -> 直道50+ or 弯道70+ or 入环岛或十字110+ or 出环岛可能80~100+ 
-int road_width_near=70;//该值通过观察check_near对应行的正常路宽来确定
-int road_B_far=40;
-int road_width_far=40;//未确定
-//由以上四个数据可以算出直道上一定距离处看到的路宽。
-int check_round_farthest=10;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，大概10也就是road_B最远检测点就好
-
-
-//通用·赛道识别================================
-Road road_B[ROAD_SIZE];//由近及远存放
-float mid_ave;//road中点加权后的值
-int valid_row=0;//与有效行相关，未有效识别
-int valid_row_thr=25;//有效行阈值
+int valid_row = 0, valid_left = 0, valid_right = 0;//与有效行相关，未有效识别
+int valid_row_thr=30;//有效行阈值
 u8 car_state=0;//智能车状态标志 0：停止  1：测试舵机  2：正常巡线
 u8 remote_state = 0;//远程控制
 u8 road_state = 0;//前方道路状态 1、直道   2、弯道  3、环岛  4、障碍 5、十字
                   //2 状态下减速
 int margin=30;//弯道判断条件
 //环岛处理========================================
+int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //不用
+int check_farthest=20;  //双线延长检测黑洞存在时，最远检测位置，cam_buffer下标，越小越远，不可太小，待调参………………
+                        
+int check_near=10;//用于观察较近处的路宽判断是否会有分道，road_B下标，越小越近，其值与road_width_thr锁定，待调参………………
+                  //对应路宽 5 -> 直道50+ or 弯道70+ or 入环岛或十字110+ or 出环岛可能80~100+ 
+int road_width_thr=90;//该值通过观察check_near对应行的正常路宽来确定
 int time_cnt=0;
-int CAM_HOLE_ROW=27; //用来向两边扫描检测黑洞·环岛的cam_buffer行位置     //弃用
-int road_hole_row=40;//road_B下标
 //以下出岛时需要全部置零
 int roundabout_state=0;//0-非环岛 1-预入环岛（直道） 2-入环岛（转向） 3-在环岛 4-出环岛（转向）      注：非零的时候会锁定环岛状态
-int roundabout_choice=2;//0-未选择 1-左 2-右 3-左右皆可(不用)      //能够选择最短路径时要初始化为0
-//int cnt_miss=0; //累计未判断成环岛的次数
-//bool former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
-//bool is_cross=0; //判断是否是十字
-//bool jump_miss=0; // 记录连续未检测到拐点的次数
-//int forced_turn=0;
-int cnt_thr=40;//检测拐点最远的位置限制，不能太远（即不能太大）否则在环岛检测到的不准，不能太小否则检测不到或者检测到的时候已经晚了
-int jump_thr=10;//两个拐点检测的阈值
+int roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可(不用)
+
+int pixinwhite=0;
+int frontwhite=0;
+int frontblack=0;
+int isblackrec;
+int iswhitefour;
+int TIMEFORHOLE=300;
+
+int cnt_miss=0; //累计未判断成环岛的次数
+bool former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
+bool is_cross=0; //判断是否是十字
+bool jump_miss=0; // 记录连续未检测到拐点的次数
+int forced_turn=0;
+int jump_thr=20;//两个跳变点检测的阈值
 int jump[2][2];//存拐点坐标 0左 1右 0-x 1-y
 bool flag_left_jump=0,flag_right_jump=0;
 //Hole hole;
-double suml=0,sumr=0;//为画图而改成全局变量
-//双车处理=======================
-bool flag_stop=0;
-//int stop_time=2;
 
+//双车处理=======================
+int car_type=1; // 后车
+bool flag_stop=0;
+int stop_time=2;
+int overtake_state=0;
+bool bt_stop=0;
 //观察·速控========================================================
 float motor_L;//=MIN_SPEED;
 float motor_R;//=MIN_SPEED;
@@ -65,15 +80,15 @@ float max_speed;//=MAX_SPEED;
 float min_speed;//=MIN_SPEED;
 
 //OLED调参
-//int debug_speed=0;
+int debug_speed=0;
 PIDInfo debug_dir;
 
 //为缓冲取平均而设置：
-//int left[DEPTH][ROAD_SIZE];
-//int right[DEPTH][ROAD_SIZE];
-//int k_depth=0;
+int left[DEPTH][ROAD_SIZE];
+int right[DEPTH][ROAD_SIZE];
+int k_depth=0;
 
-circle road_C;
+//circle C;
 //int c1=15, c2=10, c3=5;
 
 // ---- Local ----
@@ -165,6 +180,41 @@ void Cam_Algorithm(){
   }//以上原来是SW1()
 }
 
+int changdu()
+{
+  int i;
+  for (i=60;i>=0;i--)
+  {if (cam_buffer[i][CAM_WID/2]<thr) break;}
+  return i;
+}
+
+int changdu_left()
+{
+  int i;
+  for (i=60;i>=0;i--)
+  {if (cam_buffer[i][10]<thr) break;}
+  return i;
+}
+
+int changdu_right()
+{
+  int i;
+  for (i=60;i>=0;i--)
+  {if (cam_buffer[i][118]<thr) break;}
+  return i;
+}
+
+int recorddiffer(int row)
+{
+  int num=0;
+  for (int i=0;i<CAM_WID-1;i+=2)
+  {
+    if (cam_buffer[row][i]<thr&&cam_buffer[row][i+1]>thr||cam_buffer[row][i]>thr&&cam_buffer[row][i+1]<thr) num++;
+  }
+  return num;
+  
+}
+
 float constrain(float lowerBoundary, float upperBoundary, float input)
 {
 	if (input > upperBoundary)
@@ -184,7 +234,7 @@ int constrainInt(int lowerBoundary, int upperBoundary, int input)
 	else
 		return input;
 }
-
+/*
 circle getR(float x1, float y1, float x2, float y2, float x3, float y3)
 {
   double a,b,c,d,e,f;
@@ -206,12 +256,13 @@ circle getR(float x1, float y1, float x2, float y2, float x3, float y3)
   circle tmp = {r,sign};
   return tmp;
 }
-/*
-bool is_stop_line()//未写………………………………
-{
-  return 0;
-}
 */
+bool is_stop_line(int target_line)//目测并不有效……
+{
+  if((road_B[target_line].right-road_B[target_line].left)<ROAD_WID)
+    return 1;
+  else return 0;
+}
 /*
 double getSlope_(int x1, int y1, int x2, int y2)
 {
@@ -258,44 +309,103 @@ void Cam_B_Init()//初始化Cam_B
   
 }
 
-bool is_hole(int row)   //一行足矣，无需考虑平均
+
+bool findblackrec()
 {
-  int left=0,right=0;//记录左右跳变次数
+    int left=CAM_WID/2-CenterRows;
+    int right=CAM_WID/2+CenterRows;
+    int up=30-CenterLines;
+    int down=30+CenterLines;
+    for (int i=up;i<down;i++)
+    {
+      if (cam_buffer[i][left]>thr)  return 0;
+    }
+    for (int i=up;i<down;i++)
+    {
+      if (cam_buffer[i][right]>thr) return 0;
+    }
+    for (int j=left;j>right;j++)
+    {
+      if (cam_buffer[up][j]>thr) return 0;
+    }
+    for (int j=left;j>right;j++)
+    {
+      if (cam_buffer[down][j]>thr) return 0;
+    }
+    return 1;
+}
+  
+
+bool whitefour()
+{
+    int left=CAM_WID/2-CenterRows;
+    int right=CAM_WID/2+CenterRows;
+    int up=30-CenterLines;
+    int down=30+CenterLines;
+    bool flag1=1,flag2=0,flag3=0,flag4=0;
+
+    for (int i=down;i<62;i++)
+    {
+      if (cam_buffer[i][left]>thr&&cam_buffer[i][right]>thr)
+      {
+        flag2=1;break;
+      }
+    }
+    for ( int j=left;j>0;j--)
+    {
+      if (cam_buffer[up][j]>thr&&cam_buffer[down][j]>thr)
+      {
+        flag3=1;break;
+      }
+    }
+    for ( int j=right;j<CAM_WID;j++)
+    {
+      if (cam_buffer[up][j]>thr&&cam_buffer[down][j]>thr)
+      {
+        flag4=1; break;
+      }
+    }
+    if (flag1&&flag2&&flag3&&flag4) return 1;
+    else return 0;
+    
+}
+
+bool is_hole(int row)
+{
+  int left=0,right=0;
     if(cam_buffer[row][CAM_WID/2]<thr)
     {
       //left
       int i=CAM_WID/2-1;
       while(i>0){
-        if(left==0 && cam_buffer[row][i]>thr){
+        if(left==0 && cam_buffer[row][i]>thr){//是否考虑取平均防跳变？
           left++;
         }
         else if(left==1 && cam_buffer[row][i]<thr){
           left++;
         }
-        else if(left==2) break;
         i--;
       }
       //right
       i=CAM_WID/2+1;
       while(i<CAM_WID){
-        if(right==0 && cam_buffer[row][i]>thr){
+        if(right==0 && cam_buffer[row][i]>thr){//是否考虑取平均防跳变？
           right++;
         }
         else if(right==1 && cam_buffer[row][i]<thr){
           right++;
         }
-        else if(right==2) break;
         i++;
       }
     }
    // bool static hole=0;
-    if(left>=1 && right>=1)     //左右至少各经历一次黑->白的跳变
+    if(left>=1 && right>=1)
       return 1;
     else return 0;
         
 }
 
-bool isWider(int row,int road_width_thr)
+bool isWider(int row)
 {
   int wid=0;
   for(int i=-1;i<2;i++)
@@ -313,10 +423,27 @@ bool isWider(int row,int road_width_thr)
 
   //第一次进化版巡线程序
 void Cam_B(){
+  //只下载一次：
+  /*
+  MAX_SPEED_=21;
+  MIN_SPEED_=16;
+  ROUND_SPEED=10;
+  STOP_TIME=150;
+  OVERTAKE_SW=1;
+  DIR_KP=44;
+  DIR_KD=32;
+  CHASU=38;
+  */
+  
+  MAX_SPEED=MAX_SPEED_;
+  MIN_SPEED=MIN_SPEED_;
+  chasu = CHASU/1000;
+    Dir_Kp = DIR_KP/10;
+    Dir_Kd = DIR_KD;
   
     //===================变量定义====================
-  
-    static int dir;//舵机输出
+    static int dir;//舵机输出  
+
     
     //================================透视变化
     //getMatrix(0.785398,1.0,1.0,1000);
@@ -398,14 +525,12 @@ void Cam_B(){
         if (cam_buffer[60-CAM_STEP*j][i] < thr)
           break;
         }
-      /*
       left[k_depth][j]=i;
-      if(k_depth==DEPTH-1){     //加上这个条件可能会使反应变得不灵敏？？？
-        for(int k=0;k<DEPTH;k++)
+    //  if(k_depth==DEPTH-1){     //加上这个条件可能会使反应变得不灵敏？？？
+  /*      for(int k=0;k<DEPTH;k++)
           road_B[j].left += left[k][j];
-        road_B[j].left /= DEPTH;        
-      }
-      */
+        road_B[j].left /= DEPTH;        */
+     // }
       road_B[j].left = i;
       
       //right
@@ -413,123 +538,191 @@ void Cam_B(){
         if (cam_buffer[60-CAM_STEP*j][i] < thr)
           break;
         }
-      /*
       right[k_depth][j]=i;
-       if(k_depth==DEPTH-1){
-        for(int k=0;k<DEPTH;k++)
+  //    if(k_depth==DEPTH-1){
+ /*       for(int k=0;k<DEPTH;k++)
           road_B[j].right += right[k][j];               
-        road_B[j].right /= DEPTH;       
-      }
-      */
+        road_B[j].right /= DEPTH;       */
+    //  }
       road_B[j].right = i;
-      //width
-      road_B[j].width=road_B[j].right-road_B[j].left;
+      
       //mid
       road_B[j].mid = (road_B[j].left + road_B[j].right)/2;//分别计算并存储共计ROAD_SIZE行(对应cam_buffer第12~60行)的mid
       //store
       if(j<(ROAD_SIZE-1))
         road_B[j+1].mid=road_B[j].mid;//后一行从前一行中点开始扫描
     }
-    
-    //测试getR
-   // road_C=getR(road_B[0].mid,0,road_B[25].mid,25,road_B[49].mid,49);
       
     //区分前方道路类型===========================环岛优先级最高
-    //static int mid_ave3;
+/*    static int mid_ave3;
     static bool flag_valid_row=0;
     for(int i_valid=0;i_valid<(ROAD_SIZE-3) && flag_valid_row==0;i_valid++)     //寻找有效行
     {
-      //方法一，根据margin 较为可行
-      //mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
-      //if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
-     //方法二，根据mid是否相等，可能误判，未尝试
-      // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
-      //方法三，根据width
-      if(road_B[i_valid].width<=5)
+      mid_ave3 = (road_B[i_valid].mid + road_B[i_valid+1].mid + road_B[i_valid+2].mid)/3;
+      if(mid_ave3<margin||mid_ave3>(CAM_WID-margin))
+     // if(road_B[i_valid].mid==road_B[i_valid+1].mid && road_B[i_valid+1].mid==road_B[i_valid+2].mid)
       {
         flag_valid_row=1;
         valid_row=i_valid;
-        break;
       }
+     // else valid_row=ROAD_SIZE-3;
     }
-    if(flag_valid_row==0) valid_row=ROAD_SIZE-3;
+   */
+    valid_row = changdu();
+    valid_left = changdu_left();
+    valid_right = changdu_right();
     if(roundabout_state==0){    //非环岛锁定时，才选择直道或者弯道
       flag_stop=0;
-      //此处还可添加其他置零操作~~~
       if(valid_row<valid_row_thr){
         road_state=2;                     //弯道
+        //cnt_miss++;
       }
       else {
         road_state=1;                     //直道
+        //cnt_miss++;
       }
     }
     
+    //检测停止线=====================================================
+    
+    differ=recorddiffer(57);
+    int differ_thr=6;
+    
+    
+    static int stopper=0;
+    
+    if (differ>differ_thr&&stopper==0)
+    {  lap++;stopper=1;}
+    
+    
+    if (differ<differ_thr-2)
+      stopper=0;
+    
+    //累积miss数量清零
+    /*
+    if (cnt_miss>1000){
+      roundabout_flag=0;
+      former_choose_left=0;
+      former_choose_right=0;
+      cnt_miss=0;
+      is_cross=0;
+    }
+    */
+    //detect the black hole————————————————————
+    /*
+   int left=0,right=0;
+    if(cam_buffer[CAM_HOLE_ROW][CAM_WID/2]<thr)
+    {
+      //left
+      int i=CAM_WID/2-1;
+      while(i>0){
+        if(left==0 && cam_buffer[CAM_HOLE_ROW][i]>thr){//是否考虑取平均防跳变？
+          left++;
+        }
+        else if(left==1 && cam_buffer[CAM_HOLE_ROW][i]<thr){
+          left++;
+        }
+        i--;
+      }
+      //right
+      i=CAM_WID/2+1;
+      while(i<CAM_WID){
+        if(right==0 && cam_buffer[CAM_HOLE_ROW][i]>thr){//是否考虑取平均防跳变？
+          right++;
+        }
+        else if(right==1 && cam_buffer[CAM_HOLE_ROW][i]<thr){
+          right++;
+        }
+        i++;
+      }
+    }
+    bool static hole=0;
+    if(left>=1 && right>=1)
+      hole=1;//前方有类似黑洞出没
+    */
+    
     //区分环岛与十字的延长线法如下：
-    if(roundabout_state==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：//太精细的计算不适合，所以改成一个简单的
+/*    if(roundabout_state==0){     //若没有检测到环岛，则进行拐点（jump）检测，如下：
    // if(1){
-      int cnt=0;
-      int tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
-      //suml=sumr=0;
+      int cnt=0,tmpl1=0,tmpl2=0,tmpr1=0,tmpr2=0;
+      double suml=0,sumr=0;
       //int thr_tmp=0;//未用
       flag_left_jump=0,flag_right_jump=0;
-      for(cnt=0;cnt<cnt_thr;cnt++){     //在road_B[0]~[39]之间检查jump
+      for(cnt=0;cnt<ROAD_SIZE-1;cnt++){
         if(flag_left_jump==0){
-       /*   tmpl2=tmpl1;
+          tmpl2=tmpl1;
           tmpl1=road_B[cnt+1].left-road_B[cnt].left;
-          if((tmpl2-tmpl1)>jump_thr){// && cnt>(ROAD_SIZE/5)){      //附加条件：直道长度不能太短，不然偶然性较大*/
+          suml+=tmpl1;
+          if((tmpl2-tmpl1)>jump_thr && cnt>(ROAD_SIZE/5)){      //附加条件：直道长度不能太短，不然偶然性较大
 //          if(tmpl1<0&&tmpl2>0) {      //被淘汰的很弱的条件
-          
-          if((road_B[cnt].left-road_B[cnt+5].left)>jump_thr){
             flag_left_jump=1;
-            suml=road_B[cnt].left-road_B[0].left;
             jump[0][0]=road_B[cnt].left;
             jump[0][1]=60-CAM_STEP*cnt;
           }
         }
         
         if(flag_right_jump==0){
-        /*  tmpr2=tmpr1;
+          tmpr2=tmpr1;
           tmpr1=road_B[cnt+1].right-road_B[cnt].right;
-          if((tmpr1-tmpr2)>jump_thr){ //&& cnt>(ROAD_SIZE/5)){      //附加条件：直道长度不能太短，不然偶然性较大*/
+          sumr+=tmpr1;
+          if((tmpr1-tmpr2)>jump_thr && cnt>(ROAD_SIZE/5)){      //附加条件：直道长度不能太短，不然偶然性较大
 //          if(tmpr1>0&&tmpr2<0) {
-          
-          if((road_B[cnt+5].right-road_B[cnt].right)>jump_thr){
             flag_right_jump=1;
-            sumr=road_B[cnt].right-road_B[0].right;
             jump[1][0]=road_B[cnt].right;
             jump[1][1]=60-CAM_STEP*cnt;
           } 
         }       
-       if(flag_left_jump==1&&flag_right_jump==1)//检测到两个拐点       
+       if(flag_left_jump==1&&flag_right_jump==1)//检测到两个拐点
          break;
       }
-      if(flag_left_jump==1&&flag_right_jump==1){//若检测到两个拐点，则判断是环岛还是十字，如下：(同时要求两个拐点不能太远，否则没用)
+      if(flag_left_jump==1&&flag_right_jump==1){//若检测到两个拐点，则判断是环岛还是十字，如下：
         //suml  cnt*CAM_STEP
-        int cnt_black_row=0;//记录黑行个数
+        int cnt_black_row=0;//标志
         int left_now,right_now;//存当前行扫描边界
-        for(int j=cnt;(60-CAM_STEP*j)>check_round_farthest;j++){//最远检测点check_farthest已调参…………………………………………………………
-          left_now=jump[0][0]+suml*(j-cnt)/(cnt*CAM_STEP);
-          right_now=jump[1][0]+sumr*(j-cnt)/(cnt*CAM_STEP);
+        
+        for(int j=cnt;(60-CAM_STEP*j)>check_farthest;j++){//最远检测点check_farthest待调参…………………………………………………………
+          left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
+          right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
           int cnt_black=0;
           for (int i = left_now; i < right_now; i++){
             if (cam_buffer[60-CAM_STEP*j][i] < thr)
               cnt_black++;
           }
-          if(cnt_black>(right_now-left_now)*0.6) cnt_black_row++;//弱化条件试一下
-          if(cnt_black_row>=2){
-            road_hole_row=j;
-            if(is_hole(road_hole_row)){
+          if(cnt_black>(right_now-left_now)*0.8) cnt_black_row++;
+          if(cnt_black_row>=3){
+       /*     if(is_hole(CAM_HOLE_ROW)){
               road_state=3;                       //完成环岛判断
               roundabout_state=1;
-            }
-            break;
+              cnt_miss=0;
+            }*/
+ /*           break;
           }
+          else is_cross=1;
+        }
+      }
+      //出环岛时，若只有一个拐点，出，
+      else{
+        if (flag_left_jump==1 && is_cross==0){
+          former_choose_left==1;
+          jump_miss=0;
+        }
+        if (flag_right_jump==1 && is_cross==0){
+          former_choose_right=1;
+          jump_miss=0;
+        }
+        
+        //如果未检测到拐点，计数
+        if (flag_left_jump==0 && flag_right_jump==0){
+          jump_miss++;
         }
       }
     }
-
+*/    //
     
-    //detect the obstacle————————————————————//未成功
+    
+    
+  
+    //detect the obstacle————————————————————
   /*  if((road_B[ROAD_OBST_ROW].right-road_B[ROAD_OBST_ROW].left)<OBSTACLE_THR)
     {
       int i=road_B[ROAD_OBST_ROW].mid;
@@ -565,44 +758,72 @@ void Cam_B(){
         road_state=4;
     }*/
     
+    
+    static int cnt_hole=0;
+    // 1.先检查检测白线部分的算法是否有效
+    
+    int pixinwhite=0;
+    for (int j=0;j<5;j++)
+    {
+      int white=0;
+      for (int i=0;i<CAM_WID;i++)
+      {
+        if (cam_buffer[j][i]>thr) white++;
+      }
+      pixinwhite+=white;
+    }
+    pixinwhite/=5;
+    if (pixinwhite>CAM_WID*3/5) frontwhite=1;
+    else frontwhite=0;
+    
+//2.再检查黑块的识别部分的算法是否有效
+    
+    isblackrec=findblackrec();
+//3.除了中间部分的黑块还需要的条件是往两侧还有白块
+    
+    iswhitefour=whitefour();
+    
+    if (valid_left < valid_row && valid_right < valid_row && cnt_hole==0/* && valid_left < 15*/) cnt_hole = TIMEFORHOLE;
+    
     //=============================根据前方道路类型，进行不同的处理
      switch(road_state)
     {
       case 1: 
         max_speed=MAX_SPEED;
+        
        // float static weight1[10] = {1.00,1.03,1.14,1.54,2.56,4.29,6.16,7.00,6.16,4.29};//还未削弱…………………………
         //for(int i=0;i<10;i++) weight[i] = weight1[i];//削弱正态分布程度
         break;
       case 2:
-        max_speed=constrain(MIN_SPEED+1,MAX_SPEED, MAX_SPEED-5);//减多少未定，取决于弯道最高速度
+        //max_speed=constrain(MIN_SPEED+1,MAX_SPEED, MAX_SPEED-5);//减多少未定，取决于弯道最高速度
         //float static weight2[10] = {1.00,1.03,1.14,1.54,2.56,4.29,6.16,7.00,6.16,4.29};
         //for(int i=0;i<10;i++) weight[i] = weight2[i];//正态分布的权值
+        Dir_Kp=Dir_Kp2;Dir_Kd=Dir_Kd2;
         break;
       case 3:
        // max_speed=constrain(MIN_SPEED+1,MAX_SPEED, MAX_SPEED-5);
-        max_speed=min_speed+1;
+/*        max_speed=min_speed+1;
         //float  weight3[10] = {1.118, 1.454, 2.296, 3.744, 5.304, 6.000, 5.304, 3.744, 2.296, 1.454};//未确定
         //for(int i=0;i<10;i++) weight[i] = weight2[i];
         switch(roundabout_state)
         {
         case 0://非环岛，用于置零
           roundabout_state=0;//0-非环岛 1-入环岛（有分支） 2-在环岛 3-出环岛（有分支）
-        //  roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可(不用)暂时注释掉，能够选择最短路径时加回来
+          roundabout_choice=0;//0-未选择 1-左 2-右 3-左右皆可(不用)
           //cnt_miss=0; //累计未判断成环岛的次数
-          //former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
+          former_choose_left=0,former_choose_right=0;//1=choose 0=not choose
           //is_cross=0; //判断是否是十字
           //jump_miss=0; // 记录连续未检测到拐点的次数
-          //forced_turn=0;
+          forced_turn=0;
           flag_stop=0;
           break;
         case 1:
           if(roundabout_choice==0){
             //暂时用右转代替最短路径（注意：小环岛最短路径影响不大，大环岛能否看到出岛位置则是个问题）
-            //roundabout_choice=SW1()+1;
-           // roundabout_choice=1;
+            roundabout_choice=SW1()+1;
           }
-          //road_width_thr=90;
-          if(isWider(road_B_near,110)){//如果路过于宽，认为出现分叉，开始转弯
+          road_width_thr=90;
+          if(isWider(check_near)){//如果路过于宽，认为出现分叉，开始转弯
             roundabout_state=2;
             time_cnt=0;
           }
@@ -619,19 +840,11 @@ void Cam_B(){
                                         //（尝试如下，在road_B[check_near]处检测，若right-left大于road_width_max（可调参），则利用roundabout_choice将mid_ave左移或右移）
           //  }
             for(int i=1;i<ROAD_SIZE;i++){   //利用roundabout_choice给mid加偏移量
-              if(roundabout_choice==1) road_B[i].mid = constrain(0,CAM_WID/2-30,road_B[i].mid-40);
-              else if(roundabout_choice==2) road_B[i].mid = constrain(CAM_WID/2+30,CAM_WID,road_B[i].mid+40);
-              /*
               if(roundabout_choice==1) road_B[i].mid *= 0.25;
               else if(roundabout_choice==2) road_B[i].mid =constrain(0,CAM_WID-1, road_B[i].mid*1.60);
-              */
             }
-            //road_width_thr=100;
-            if(!isWider(road_B_near,100) && time_cnt>1000){ //如果路宽恢复正常，认为完成入岛//我猜不如下面的时间控制方式有效
-              roundabout_state=3;
-              time_cnt=0;
-            }
-            else if(time_cnt>3000){
+            road_width_thr=100;
+            if(!isWider(check_near) && time_cnt>500){ //如果路宽恢复正常，认为完成入岛//^……………………………………………………此处不能脱离状态！！！！！！！！！！！！
               roundabout_state=3;
               time_cnt=0;
             }
@@ -640,53 +853,46 @@ void Cam_B(){
           break;
         case 3://在环岛内，看不到出岛，当做弯道行驶
            //停车：
-         /* if(time_cnt>=300&&time_cnt<2000)
+          if(time_cnt>=100&&time_cnt<(100+stop_time*2200))
             flag_stop=1;
           else flag_stop=0;
-          */
+          
          
           
-          //用来检测什么时候出现分叉//双重条件，增大识别的可能，非最终版
+          //用来检测什么时候出现分叉//完全不行！！！！！！！！！！！！！！！！！！！！！！！！！！！？？？？？？？？？？？？？？？？？？？？
           time_cnt++;
-          if(flag_stop==0){
-            if(isWider(road_B_near,100)){
+          if(roundabout_choice==1)
+            if(road_B[45].mid<60 && time_cnt>=500){
               roundabout_state=4;
               time_cnt=0;
             }
-            if(roundabout_choice==1)
-              if(road_B[49].mid<CAM_WID/2 && time_cnt>=500){
-                roundabout_state=4;
-                time_cnt=0;
-              }
-            else if(roundabout_choice==2)
-              if(road_B[49].mid>CAM_WID/2 && time_cnt>=500){
-                roundabout_state=4;
-                time_cnt=0;
-              }
-          }
-          if(time_cnt>10000) roundabout_state=0;//约5s  大环岛建议去掉该行
-          //以上仅用作紧急处理，最好不要触发该条件
+          else if(roundabout_choice==2)
+            if(road_B[45].mid>(CAM_WID-60) && time_cnt>=500){
+              roundabout_state=4;
+              time_cnt=0;
+            }
+          if(time_cnt>5000) roundabout_state=0;//约2s  大环岛建议去掉该行
           //如果未检测到，时间又长，说明已经出环岛………………………………如果太短可能会因此而出不了环岛锁定状态……………………………………
             //暂不考虑这种情况，因为大环岛与小环岛用时不同，不可一概而论，（更佳方案是检测纯直道，作为出岛标志）
           break;
         case 4://出环岛，又一次分道
            //停车：
-          if(time_cnt>=0&&time_cnt<1500)
+          if(time_cnt>=0&&time_cnt<(stop_time*2200*0.5))
             flag_stop=1;
           else flag_stop=0;
           
           time_cnt++;
           for(int i=1;i<ROAD_SIZE;i+=(ROAD_SIZE/10)){   //利用roundabout_choice给mid加偏移量//与forced_turn异曲同工
-            if(roundabout_choice==1) road_B[i].mid = constrain(0,CAM_WID/2,road_B[i].mid-30);
-            else if(roundabout_choice==2) road_B[i].mid = constrain(CAM_WID/2,CAM_WID,road_B[i].mid+30);
+            if(roundabout_choice==1) road_B[i].mid = CAM_WID/2-35;
+            else if(roundabout_choice==2) road_B[i].mid = CAM_WID/2+35;
           }
-          //road_width_thr=70;
-          if(!isWider(road_B_near,70) && time_cnt>=1000){ //如果路宽回复正常，认为出环岛
+          road_width_thr=70;
+          if(!isWider(check_near) && time_cnt>=(stop_time*2200+500)){ //如果路宽回复正常，认为出环岛
             roundabout_state=0;
             time_cnt=0;
             flag_stop=0;
           }
-          else if(time_cnt>10000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
+          else if(time_cnt>5000) roundabout_state=0;   //2s 未检测到路宽恢复正常则认为出岛
           break;
         default:break;
         }
@@ -817,9 +1023,20 @@ void Cam_B(){
       default:break;
     }
     
+    //===============================前车变后车
+    if (car_type == 0 && overtake_state==1){
+      if (waveState == STABLE){
+        car_type = 1;
+        overtake_state=0;
+        cnt_speed=0;
+        for(int i=0;i<10;i++)
+          UART_SendChar('a');
+      }
+    }
+    
     //================================对十行mid加权：
     float weight_sum=0;
-    int step=2;
+    int step=3;
     for(int j=0;j<10;j++)
     {
       mid_ave += road_B[j*step].mid * weight[road_state][j];
@@ -833,14 +1050,36 @@ void Cam_B(){
     err = mid_ave  - CAM_WID / 2;
 
     dir = (Dir_Kp+debug_dir.kp) * err + (Dir_Kd+debug_dir.kd) * (err-last_err);     //舵机转向  //参数: (7,3)->(8,3.5)-(3.5,3)
-    if(dir>0)
-      dir*=1.35;//修正舵机左右不对称的问题//不可删
+   // if(dir>0)
+   //   dir*=1.35;//修正舵机左右不对称的问题//不可删
     last_err = err;
     
-    dir=constrainInt(-230,230,dir);
+//    if (road_state==2)
+ //   {
+ //     if (dir > 100) dir = 300;
+//      else if (dir>100) dir=230;
+ //     else if (dir<-100) dir=-300;
+//      else if (dir<-180) dir=300;
+ //   }
     
-    //if(forced_turn==1) dir=-200;
-    //else if(forced_turn==2) dir=200;
+    
+
+    while(cnt_hole>0) 
+    {
+      cnt_tmp = cnt_hole;
+      if (car_type == 1 || OVERTAKE_SW==0){
+        dir = -250;}
+      else dir = 250;
+      cnt_hole--;
+      if(car_type==0 && cnt_hole==0 && OVERTAKE_SW==1)
+        cnt_speed=STOP_TIME;
+      else if((car_type==1 && cnt_hole==0) || OVERTAKE_SW==0)
+        cnt_speed2=100;
+    }
+    dir=constrainInt(-250,250,dir);
+    
+//    if(forced_turn==1) dir=-200;
+//    else if(forced_turn==2) dir=200;
     
     if(car_state!=0)
       Servo_Output(dir);
@@ -851,13 +1090,25 @@ void Cam_B(){
     
     //==============速度控制=================
     //PWM以dir为参考，前期分级控制弯道速度；中期分段线性控速；后期找到合适参数的时候，再进行拟合——PWM关于dir的函数
-    min_speed=MIN_SPEED;
-    float range=constrain(0,50,max_speed-min_speed);//速度范围大小 
-    if(flag_stop==1)
-     PWM(0,0,&L,&R);
-    else if(car_state==2 ){
+    min_speed = MIN_SPEED;
+    float range = constrain(0, 50, max_speed - min_speed);//速度范围大小 
+    if(flag_stop == 1 || lap>=2)
+    {
+      if(lap>=2 && stop_delay_flag==0){
+        stop_delay_flag=1;
+        stop_delay=40;
+      }
+//     PWM(0, 0, &L, &R);
+      if(stop_delay<=0){
+        MotorL_Output(0); 
+        MotorR_Output(0);
+      }
+      UART_SendChar('c');
+    }
+      
+    else if(car_state == 2){
       //分段线性控速
-      if(abs(dir)<50 ){//&& valid_row>valid_row_thr
+/*      if(abs(dir)<50 ){//&& valid_row>valid_row_thr
         motor_L=motor_R=max_speed;
       }
       else if(abs(dir)<95){
@@ -870,7 +1121,7 @@ void Cam_B(){
         if(dir>0) motor_R=constrain(min_speed,motor_R,motor_R*0.8);//右转
         else motor_L=constrain(min_speed,motor_L,motor_L*0.8);//0/8
       }
-      else if(abs(dir)<230){
+      else if(abs(dir)<=300){
         motor_L=motor_R=max_speed-0.66*range-0.33*range*(abs(dir)-185)/45;
         if(dir>0) motor_R=constrain(min_speed,motor_R,motor_R*0.7);//右转
         else motor_L=constrain(min_speed,motor_L,motor_L*0.7);//0.7
@@ -878,8 +1129,50 @@ void Cam_B(){
       else{
         motor_L=motor_R=min_speed;
       }
+      
+ */   
+//      if (cnt_hole>0) 
+//         MIN_SPEED=20;
+      
+      if (cnt_speed > 0){
+        MIN_SPEED=1;
+        //MotorL_Output(0);
+        //MotorR_Output(0);
+        overtake_state=1;
+      }
+      else if(cnt_speed2>0){
+        MIN_SPEED=ROUND_SPEED;
+      }
+      else {
+        MIN_SPEED=MIN_SPEED_;
+        overtake_state=0;
+      }
+      
+      if(valid_row < 30)
+        {
+          motor_L = motor_R = MAX_SPEED;
+        }
+        else
+        {
+          motor_L = MIN_SPEED*(1 + chasu * dir / 70);
+          motor_R = MIN_SPEED*(1 - chasu * dir / 70);
+        }
+      if (distance <= 400 && overtake_state == 0 && waveState == STABLE && bt_stop==0){
+         motor_L *= 0.7;
+         motor_R *= 0.7;
+      }
+      if (road_state==1 && waveState == STABLE && distance >=600 || bt_stop==1){
+         motor_L *= 1.2;
+         motor_R *= 1.2;
+      }
+      
       PWM(motor_L, motor_R, &L, &R);               //后轮速度
+      
+
     }
+      
+      
+      
    else
    {
       MotorL_Output(0); 

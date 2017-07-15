@@ -52,8 +52,8 @@ void PID_Init()
 
 void PWM(u8 left_speed, u8 right_speed, PIDInfo *L, PIDInfo *R)      //前进的PID控制
 {  
-  L_err=left_speed+tacho0;
-  R_err=right_speed-tacho1;
+  L_err=left_speed-tacho0;
+  R_err=right_speed+tacho1;
   L->errSum+=L_err;
   if(L->errSum>300) L->errSum=300;
   if(L->errSum<-300) L->errSum=-300;
@@ -117,11 +117,18 @@ void PIT1_IRQHandler(){
   
   UI_SystemInfo();
   
-  //------------------------
-  if(delay_zebra1 > 0)
-    delay_zebra1--;
-  if(delay_zebra2 > 0)
-    delay_zebra2--;
+  if(cnt_speed > 0)
+    cnt_speed--;
+  if(cnt_speed2 > 0)
+    cnt_speed2--;
+  if(stop_delay>0)
+    stop_delay--;
+  
+  if(wave_lost_cnt<20) wave_lost_cnt++;
+  if(wave_lost_cnt == 20) waveState = LOST;
+  
+  if(wave_abslost_cnt<10) wave_abslost_cnt++;
+  if(wave_abslost_cnt == 10) waveState = ABSLOST;
   
   //------------ Other -------------
   
@@ -211,7 +218,7 @@ void PIT0_IRQHandler(){
   
   // not balance example : Servo_Output(dir_output);  
   // example : MotorL_Output(motorL_output); MotorR_Output(motorR_output);
- //MotorL_Output(550); MotorR_Output(-550);
+ //MotorL_Output(520); MotorR_Output(520);
 
   
   

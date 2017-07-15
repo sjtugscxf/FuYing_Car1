@@ -98,24 +98,31 @@ void displayParameters()//menu==1
   static int page=0;
   Putboth outpair[Pages][Rows]={
     {
-  {"road_state",road_state},{"round_state",roundabout_state},{"round_choice",roundabout_choice},
-  {"battery",battery},  {"valid_row",valid_row}, 
-  {"width[hole]",road_B[(road_hole_row)/CAM_STEP].width},
-  {"sum_l",suml},{"sum_r",sumr},
+      {"distance",distance},  
+      {"waveState",waveState},
+  {"road_state",road_state},
+  {"overtake",overtake_state},
+  {"car_type",car_type},
+  {"cnt_speed",cnt_speed},
+  {"round_state",roundabout_state},{"round_choice",roundabout_choice},
   //{"check near wid",road_B[check_near].right-road_B[check_near].left},
   //{"check far wid",road_B[60-check_farthest].right-road_B[60-check_farthest].left},
- // 
+  {"valid_row",valid_row}, 
   {"f_j_left",flag_left_jump},  {"f_j_right",flag_right_jump},
   {"jump00",jump[0][0]},        {"jump01",jump[0][1]},
   {"jump10",jump[1][0]},        {"jump11",jump[1][1]}, 
+  {"forced_turn",forced_turn},
+  {"jump_miss",jump_miss},
+  {"cnt_miss",cnt_miss},        {"f_ch_left",former_choose_left},{"isblackrec",isblackrec},
+  {"iswhitefour",iswhitefour},
   //
-        {"RWNear",road_B[road_B_near].width},{"RWFar",road_B[road_B_far].width},
-      {"servo",ServoOut},       {"mid_ave",mid_ave},       
+      {"battery",battery},    
+      {"servo",ServoOut},       //{"mid_ave",mid_ave},       
       {"car_state",car_state},
       {"tacho0",tacho0},{"tacho1",tacho1},
       {"motor_L",motor_L},{"motor_R",motor_R},
-      {"pit0 time",pit0_time},  {"pit1 time",pit1_time}
-      // {"road_C.r",road_C.r},{"road_C.sign",road_C.sign},
+      {"pit0 time",pit0_time},  {"pit1 time",pit1_time},{"lap",lap}
+      //{"C.r",C.r},{"C.sign",C.sign}
     },
     { 
       {"mid_ave",mid_ave},
@@ -128,20 +135,8 @@ void displayParameters()//menu==1
       {"mid[18]",road_B[18].mid},   {"mid[19]",road_B[19].mid},       {"mid[20]",road_B[20].mid},
       {"mid[21]",road_B[21].mid},   {"mid[22]",road_B[22].mid},       {"mid[23]",road_B[23].mid}, 
       {"mid[24]",road_B[24].mid}*/
-      {"mid[0]",road_B[0].mid},     {"mid[1]",road_B[5].mid},         {"mid[2]",road_B[10].mid},       {"mid[3]",road_B[15].mid},     {"mid[4]",road_B[20].mid},  
-      {"mid[5]",road_B[25].mid},       {"mid[6]",road_B[30].mid},     {"mid[7]",road_B[35].mid},         {"mid[8]",road_B[40].mid},     {"mid[9]",road_B[45].mid}  
-    },
-    {
-      {"left[0]",road_B[0].left},     {"left[1]",road_B[5].left},         {"left[2]",road_B[10].left},       {"left[3]",road_B[15].left},     {"left[4]",road_B[20].left},  
-      {"left[5]",road_B[25].left},       {"left[6]",road_B[30].left},     {"left[7]",road_B[35].left},         {"left[8]",road_B[40].left},     {"left[9]",road_B[45].left} 
-    },
-    {
-      {"right[0]",road_B[0].right},     {"right[1]",road_B[5].right},         {"right[2]",road_B[10].right},       {"right[3]",road_B[15].right},     {"right[4]",road_B[20].right},  
-      {"right[5]",road_B[25].right},       {"right[6]",road_B[30].right},     {"right[7]",road_B[35].right},         {"right[8]",road_B[40].right},     {"right[9]",road_B[45].right} 
-    },
-    {
-      {"width[0]",road_B[0].width},     {"width[1]",road_B[5].width},         {"width[2]",road_B[10].width},       {"width[3]",road_B[15].width},     {"width[4]",road_B[20].width},  
-      {"width[5]",road_B[25].width},       {"width[6]",road_B[30].width},     {"width[7]",road_B[35].width},         {"width[8]",road_B[40].width},     {"width[9]",road_B[45].width} 
+      {"left4",road_B[4].left},     {"right4",road_B[4].right},         {"left5",road_B[5].left},       {"right5",road_B[5].right},     {"mid[4]",road_B[20].mid},  
+      {"differ",differ},       {"lap",lap},     {"stopper",stopper},         {"mid[8]",road_B[40].mid},     {"mid[9]",road_B[45].mid},  
     },
    // {
           
@@ -190,24 +185,10 @@ void displayParameters()//menu==1
 
 void displayCamera()//menu==2
 {
-  static int page=0;
-  if(Key2() && Key3() && Key1())  flag_down=0;//检测是否按下key2 key3
-  //下一页
-  if(!Key1() && flag_down==0)
-  {
-    page++;
-    page%=2;
-    flag_down=1;
-  }
-  switch(page){
-  case 0:
+//  if(!Key1())
     drawCam(isWhite);
-    break;
-  case 1:
-    drawRoad();
-    break;
-  default:break;
-  }
+ // else
+  //  drawCam2(isWhite);
 }
 
 
@@ -218,80 +199,60 @@ void displayDebug()//menu==3
   else if(!Key1() && flag_down==0)
   {
     para_state++;
-    para_state%=6;
+    para_state%=8;
     flag_down=1;
   }
   switch(para_state)
   {
-  /*  case 0:
-    Oled_Putstr(6,0,"Debugging CAM_HOLE_ROW"); Oled_Putnum(7,11,CAM_HOLE_ROW);
-    if(!Key2() && flag_down==0) {CAM_HOLE_ROW+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {CAM_HOLE_ROW-=1;flag_down=1;}
-    break;
-  case 1:
-    Oled_Putstr(6,0,"Debugging ROAD_OBST_ROW"); Oled_Putnum(7,11,ROAD_OBST_ROW);
-    if(!Key2() && flag_down==0) {ROAD_OBST_ROW+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {ROAD_OBST_ROW-=1;flag_down=1;}
-    break;
-  case 2:
-    Oled_Putstr(6,0,"Debugging OBSTACLE_THR"); Oled_Putnum(7,11,OBSTACLE_THR);
-    if(!Key2() && flag_down==0) {OBSTACLE_THR+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {OBSTACLE_THR-=1;flag_down=1;}
-    break;*/
   case 0:
-    Oled_Putstr(6,0,"Debugging dir.kp"); Oled_Putnum(7,11,debug_dir.kp*10);
-    if(!Key2() && flag_down==0) {debug_dir.kp+=0.1;flag_down=1;}
-    if(!Key3() && flag_down==0) {debug_dir.kp-=0.1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging dir.kp"); Oled_Putnum(7,11,DIR_KP);
+    if(!Key2() && flag_down==0) {DIR_KP+=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {DIR_KP-=1;flag_down=1;}
     break;
   case 1:
-    Oled_Putstr(6,0,"Debugging dir.kd"); Oled_Putnum(7,11,debug_dir.kd*10);
-    if(!Key2() && flag_down==0) {debug_dir.kd+=0.1;flag_down=1;}
-    if(!Key3() && flag_down==0) {debug_dir.kd-=0.1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging dir.kd"); Oled_Putnum(7,11,DIR_KD);
+    if(!Key2() && flag_down==0) {DIR_KD+=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {DIR_KD-=1;flag_down=1;}
     break;
   case 2:
-    Oled_Putstr(6,0,"Debugging MaxSpeed"); Oled_Putnum(7,11,MAX_SPEED);
-    if(!Key2() && flag_down==0) {MAX_SPEED+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && max_speed>min_speed+1) {MAX_SPEED-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging MaxSpeed_"); Oled_Putnum(7,11,MAX_SPEED_);
+    if(!Key2() && flag_down==0) {MAX_SPEED_+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && MAX_SPEED_>MIN_SPEED_) {MAX_SPEED_-=1;flag_down=1;}
     break;
   case 3:
-    Oled_Putstr(6,0,"Debugging MinSpeed"); Oled_Putnum(7,11,MIN_SPEED);
-    if(!Key2() && flag_down==0) {MIN_SPEED+=1;flag_down=1;}
-    if(!Key3() && flag_down==0 && MIN_SPEED>1) {MIN_SPEED-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging MinSpeed_"); Oled_Putnum(7,11,MIN_SPEED_);
+    if(!Key2() && flag_down==0) {MIN_SPEED_+=1;flag_down=1;}
+    if(!Key3() && flag_down==0 && MIN_SPEED_>1) {MIN_SPEED_-=1;flag_down=1;}
     break;
   case 4:
-    Oled_Putstr(6,0,"Debugging jump_thr"); Oled_Putnum(7,11,jump_thr);
-    if(!Key2() && flag_down==0) {jump_thr+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {jump_thr-=1;flag_down=1;} 
+    Oled_Putstr(6,0,"Debugging ROUND_SPEED"); Oled_Putnum(7,11,ROUND_SPEED);
+    if(!Key2() && flag_down==0) {ROUND_SPEED+=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {ROUND_SPEED-=1;flag_down=1;}
     break;
   case 5:
-    Oled_Putstr(6,0,"roundabout_choice"); Oled_Putnum(7,11,roundabout_choice);
-    if(!Key2() && flag_down==0) {roundabout_choice=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {roundabout_choice=2;flag_down=1;} 
-    break;
-/*  case 4:
-    Oled_Putstr(6,0,"Debugging c1"); Oled_Putnum(7,11,c1);
-    if(!Key2() && flag_down==0) {c1+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c1-=1;flag_down=1;}
-    break;
-  case 5:
-    Oled_Putstr(6,0,"Debugging c2"); Oled_Putnum(7,11,c2);
-    if(!Key2() && flag_down==0) {c2+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c2-=1;flag_down=1;}
+    Oled_Putstr(6,0,"Debugging CHASU"); Oled_Putnum(7,11,CHASU);
+    if(!Key2() && flag_down==0) {CHASU+=1;flag_down=1;}
+    if(!Key3() && flag_down==0) {CHASU-=1;flag_down=1;} 
     break;
   case 6:
-    Oled_Putstr(6,0,"Debugging c3"); Oled_Putnum(7,11,c3);
-    if(!Key2() && flag_down==0) {c3+=1;flag_down=1;}
-    if(!Key3() && flag_down==0) {c3-=1;flag_down=1;}
-    break;*/
+    Oled_Putstr(6,0,"Debugging OVERTAKE_SW"); Oled_Putnum(7,11,OVERTAKE_SW);
+    if(!Key2() && flag_down==0) {flag_down=1;}
+    if(!Key3() && flag_down==0) {if(OVERTAKE_SW==0) OVERTAKE_SW=1; else OVERTAKE_SW=0;flag_down=1;}
+    break;
+  case 7:
+    Oled_Putstr(6,0,"Debugging STOP_TIME"); Oled_Putnum(7,11,STOP_TIME);
+    if(!Key2() && flag_down==0) {STOP_TIME+=10;flag_down=1;}
+    if(!Key3() && flag_down==0) {STOP_TIME-=10;flag_down=1;} 
+    break;
   default:break;
   }
   
-  Oled_Putstr(0,0,"dir.kp*10"); Oled_Putnum(0,11,(Dir_Kp+debug_dir.kp)*10);
-  Oled_Putstr(1,0,"dir.kd*10"); Oled_Putnum(1,11,(Dir_Kd+debug_dir.kd)*10);
-  Oled_Putstr(2,0,"MaxSpeed"); Oled_Putnum(2,11,max_speed);
-  Oled_Putstr(3,0,"MinSpeed"); Oled_Putnum(3,11,min_speed);
-  Oled_Putstr(4,0,"jump_thr"); Oled_Putnum(4,11,jump_thr);  
-  Oled_Putstr(5,0,"check_far"); Oled_Putnum(5,11,check_round_farthest); 
+  Oled_Putstr(0,0,"DIR_KP"); Oled_Putnum(0,11,DIR_KP);
+  Oled_Putstr(1,0,"DIR_KD"); Oled_Putnum(1,11,DIR_KD);
+  Oled_Putstr(2,0,"MAX_SPEED"); Oled_Putnum(2,11,MAX_SPEED);
+  Oled_Putstr(3,0,"MIN_SPEED"); Oled_Putnum(3,11,MIN_SPEED);
+  Oled_Putstr(4,0,"STOP_TIME"); Oled_Putnum(4,11,STOP_TIME);  
+  Oled_Putstr(5,0,"CHASU"); Oled_Putnum(5,11,CHASU); 
 }
 
 void drawCam(bool(*isTarget)(u8 x)) {
@@ -340,64 +301,7 @@ void UI_Graph(u8* data){
   
 }
 
-void drawRoad()
-{
-  int row, col, i, j;
- // int left_now, right_now;
- // int cnt=(60-jump[0][1])/CAM_STEP;
-  u8 buf[1024];
-  u8 *p = buf;
-    
-  for (row = IMG_ROWS-1; row >= 0; row -= 8) {
-    for (col = IMG_COLS-1; col >= 0 ; col--) {
-      u8 tmp = 0;
-      for (i = 0; i < 8; i++) {
-        tmp <<= 1;
-        if((row-i)>=(10+CAM_STEP) && (row-i)<=60){
-          j=(60-(row-i))/CAM_STEP;
-        //  left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
-        //  right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
-          if (road_B[j].left==col || road_B[j].mid==col || road_B[j].right==col)//isTarget(cam_buffer[row-i][col]))
-            tmp |= 0x01;
-        //  else if(col==left_now || col==right_now)
-        //    tmp |= 0x01;
-        }
-      }
-      *p++ = tmp;
-    }
-  }
-  Oled_DrawBMP(0, 0, 128, 64, buf);
-}
 
-void drawJump()
-{
-  int row, col, i, j;
-  int cnt=(60-jump[0][1])/CAM_STEP;
-  int left_now, right_now;
-  u8 buf[1024];
-  u8 *p = buf;
-    
-  for (row = IMG_ROWS-1; row >= 0; row -= 8) {
-    for (col = IMG_COLS-1; col >= 0 ; col--) {
-      u8 tmp = 0;
-      for (i = 0; i < 8; i++) {
-        tmp <<= 1;
-        if((row-i)>=(10+CAM_STEP) && (row-i)<=jump[0][1] && (row-i)<=jump[1][1]){
-          j=(60-(row-i))/CAM_STEP;//road_B的下标
-         // left_now=jump[0][0]+(jump[0][1]-(row-i))*suml/(60-jump[0][1]);
-         // right_now=jump[1][0]+(jump[1][1]-(row-i))*sumr/(60-jump[1][1]);//感觉这个更对
-          left_now=jump[0][0]+suml*j/(cnt*CAM_STEP);
-          right_now=jump[1][0]+sumr*j/(cnt*CAM_STEP);
-         // if (col==left_now || col==right_now)//isTarget(cam_buffer[row-i][col]))
-          if(col==jump[0][0] || col==jump[1][0])
-            tmp |= 0x01;
-        }
-      }
-      *p++ = tmp;
-    }
-  }
-  Oled_DrawBMP(0, 0, 128, 64, buf);
-}
 
 
 

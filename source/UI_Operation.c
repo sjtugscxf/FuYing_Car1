@@ -91,7 +91,8 @@ void Key1_Downspin_Func(){
 }
 
 void Key2_Downspin_Func(){
-  
+    Flash_Write(0);
+  //NVIC_DisableIRQ(PIT1_IRQn);
 }
 
 void Key3_Downspin_Func(){
